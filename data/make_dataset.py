@@ -1,3 +1,4 @@
+import torchvision.transforms
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 import os
@@ -35,10 +36,11 @@ class MyDataset(Dataset):
 
     def __getitem__(self, idx):
         input=Image.open(self.input_dir[idx])
-        input=np.asarray(input)/255.
+        #input=np.asarray(input)
         ground_true = Image.open(self.ground_dir[idx])
-        ground_true = np.asarray(ground_true)/255.
-
+        #ground_true = np.asarray(ground_true)
+        ground_true=torchvision.transforms.ToTensor()(ground_true)
+        #ground_true = torchvision.transforms.Resize()(ground_true)
         if self.transform:
             input = self.transform(input)
 
@@ -46,8 +48,8 @@ class MyDataset(Dataset):
 
 
 if __name__ == '__main__':
-    inputdir=get_image_paths('D:/Ldata/NOAM/train/AT')
-    grounddir=get_image_paths('D:/Ldata/NOAM/train/Ping')
+    inputdir=get_image_paths('D:/Ldata/NOAM/AT')
+    grounddir=get_image_paths('D:/Ldata/NOAM/ping')
     #print(inputdir)
 
     train_dataset = MyDataset(input_dir=inputdir,
