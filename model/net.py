@@ -79,7 +79,7 @@ class UNet(nn.Module):
         self.C8 = Conv(256, 128)
         self.U4 = UpSampling(128)
         self.C9 = Conv(128, 64)
-        self.pred = torch.nn.Conv2d(64, 1, 1, 1, 1)
+        self.pred = torch.nn.Conv2d(64, 1, 3, 1, 1)
         self.Th = torch.nn.Sigmoid()
 
     def forward(self, x):
