@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 import os
-DATA_DIR = 'D:/Ldata/NOAM/AT'
+DATA_DIR = 'D:/aDeskfile/OAM/AT'
 
 # 1. 加载数据集中所有图片，并计算它们的均值和方差
 mean = np.zeros((1,))
@@ -32,5 +32,5 @@ std = std / count
 print('Mean: ', mean)
 print('Std: ', std)
 
-#Mean:  [0.16436058]
-#Std:  [0.1736191]
+#Mean:  [0.12622979]
+#Std:  [0.20764818]

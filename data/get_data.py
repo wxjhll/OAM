@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cv2
 np.random.seed(43)
+from tqdm import tqdm
+
 
 def cart2pol(x, y):
     xx, yy = np.meshgrid(x, y)
@@ -50,14 +52,14 @@ L = 0.15  # 相位屏长度
 N = 128# 采样点数
 dx = L / N  # 像素间距
 bochang = 1550e-9  # 波长
-z = 300  # 传播距离
-dz = 300  # 相位屏间隔
+z = 400  # 传播距离
+dz = 400  # 相位屏间隔
 k = 2 * np.pi / bochang  # 波数
 w0 = 0.03  # 束腰半径
 x = np.linspace(-L / 2, L / 2, N)
 y = np.linspace(-L / 2, L / 2, N)
 X, Y = np.meshgrid(x, y)
-[r, theta] = cart2pol(X, Y)
+[r, theta] = cart2pol(x, y)
 beta = 40 * np.pi / 180
 
 m = 0  # 拓扑核
@@ -66,36 +68,45 @@ cn2=[]
 pmax=0
 pmin=0
 
-for i in range(3000):
-    Cn2 = 1e-14 # 湍流强度
-    ping = get_ping(Cn2)  # 湍流相位屏
-    E = np.fft.fft2(E1 * np.exp(1j * ping))
-    H = get_H()  # 传递函数
-    H = np.fft.fftshift(H)
-    E = np.fft.ifft2(E * H)
-    # 湍流后光束
-    I_E = abs(E)
-    I_E = I_E / np.max(abs(E))
-    I_E = I_E * 255
-    I_E = I_E.astype(np.uint8)
-    # 原光束
-    I1 = abs(E1)
-    I1 = I1 / np.max(abs(E1))
-    I1 = I1 * 255
-    I1 = I1.astype(np.uint8)
+for i in tqdm(range(15000)):
+        Cn2 = 1e-14*((i)%100+1) # 湍流强度
+        ping = get_ping(Cn2)  # 湍流相位屏
+        E = np.fft.fft2(E1 * np.exp(1j * ping))
+        H = get_H()  # 传递函数
+        H = np.fft.fftshift(H)
+        E = np.fft.ifft2(E * H)
+        # 湍流后光束
+        I_E = abs(E)
+        I_E = I_E / np.max(abs(E))
+        I_E = I_E * 255
+        I_E = I_E.astype(np.uint8)
+        # 原光束
+        I1 = abs(E1)
+        I1 = I1 / np.max(abs(E1))
+        I1 = I1 * 255
+        I1 = I1.astype(np.uint8)
+        '''
+        plt.figure()
+        plt.imshow(I_E)
+        plt.clim(0,255)
+        plt.show()
+        '''
+        if np.max(ping) > pmax:
+            pmax = np.max(ping)
+        if np.min(ping) < pmin:
+            pmin = np.min(ping)
 
-    if np.max(ping)>pmax:
-        pmax=np.max(ping)
-    if np.min(ping) < pmin:
-        pmin = np.min(ping)
 
-    ''''j
-    ping=(ping-0)/(2-1)
-    ping=ping*255
-    ping = ping.astype(np.uint8)
-    cv2.imwrite('D:/aDeskfile/OAM/AT/{}.png'.format(i), I_E)
-    cv2.imwrite('D:/aDeskfile/OAM//ping/{}.png'.format(i), ping)
-    '''
+        ping=(ping+5.106364188889021)/(5.175492416401728 +5.106364188889021)
+        ping=ping*255
+        ping = ping.astype(np.uint8)
+        path_at='D:/aDeskfile/OAM/AT/'+str(i)+'.png'
+        path_ping='D:/aDeskfile/OAM/ping/'+str(i)+'.png'
+        cv2.imwrite(path_at, I_E)
+        cv2.imwrite(path_ping, ping)
+
+
+print(pmax,pmin)
 
 
 

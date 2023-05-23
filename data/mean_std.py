@@ -10,7 +10,7 @@ def get_image_paths(image_dir=None):
     #train_data_path = glob.glob( 'E:/data/train/*/*.jpg' )
     return paths
 
-paths=get_image_paths(image_dir='D:/Ldata/NOAM/train/AT')
+paths=get_image_paths(image_dir='D:/aDeskfile/OAM/AT')
 mean=0
 var=0
 max=0
@@ -18,11 +18,11 @@ for path in tqdm(paths):
     image=Image.open(path)
     image=np.asarray(image)/255.
     #mean+=np.mean(image)
-    var+=np.mean((image-0.16436058168598208)**2)
+    var+=np.mean((image-0.12622979)**2)
     #print(np.mean(image))
 
 
 #mean /= len(paths) #0.16436058168598208
 #print(mean)
 var/=len(paths)
-print(var)#0.0334704598535126
+print(np.sqrt(var))#0.0334704598535126

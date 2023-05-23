@@ -19,29 +19,26 @@ def getdataloader(batch_size=32,transform=None):
                               ground_dir=grounddir,
                               transform=transform)
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size,shuffle=True
-                                  ,num_workers=2,drop_last=False)
+                                  ,num_workers=4,drop_last=False)
     return train_dataloader
-def train_model(batch_size = 16,epochs = 100):
+def train_model(batch_size = 32,epochs = 100):
 
     transform = transforms.Compose([
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.16436058], std=[0.1736191]),
+        transforms.Normalize(mean=[0.12622979], std=[0.20764818]),
 
 
     ])
 
-    inputdir = get_image_paths('D:/Ldata/NOAM/AT')
-    grounddir = get_image_paths('D:/Ldata/NOAM/ping')
-    train_dataset = MyDataset(input_dir=inputdir,
-                              ground_dir=grounddir,
+    train_at, train_ping, val_at, val_ping = split_train_val(imgage_dir='D:/aDeskfile/OAM/AT', split=0.8)
+    train_dataset = MyDataset(input_dir=train_at,
+                              ground_dir=train_ping,
                               transform=transform)
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True
-                                  , num_workers=2, drop_last=False)
+                                  , num_workers=4, drop_last=False)
     #验证集
-    inputdir2 = get_image_paths('D:/Ldata/NOAM/val/AT')
-    grounddir2 = get_image_paths('D:/Ldata/NOAM/val/ping')
-    val_dataset = MyDataset(input_dir=inputdir2,
-                              ground_dir=grounddir2,
+    val_dataset = MyDataset(input_dir=val_at,
+                              ground_dir=val_ping,
                               transform=transform)
     val_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True
                                   , num_workers=2, drop_last=False)
@@ -98,6 +95,8 @@ def train_model(batch_size = 16,epochs = 100):
     plt.ylabel('Loss')
     plt.legend()
     plt.show()
+    timestamp = int(time.time())
+    plt.savefig('./result/loss_curve{}.png'.format(timestamp))
 
 
 
