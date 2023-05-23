@@ -89,7 +89,7 @@ for i in range(3000):
     if np.min(ping) < pmin:
         pmin = np.min(ping)
 
-    ''''
+    ''''j
     ping=(ping-0)/(2-1)
     ping=ping*255
     ping = ping.astype(np.uint8)
