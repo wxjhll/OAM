@@ -9,8 +9,8 @@ from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 from model.net import UNet
 import torch.nn as nn
-
-
+from torchsummary import summary
+from model.net3 import net3
 
 def getdataloader(batch_size=32,transform=None):
     inputdir = get_image_paths('D:/Ldata/NOAM/AT')
@@ -25,12 +25,9 @@ def train_model(batch_size = 32,epochs = 100):
 
     transform = transforms.Compose([
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.12622979], std=[0.20764818]),
+        transforms.Normalize(mean=[0.12590456], std=[0.20678793])])
 
-
-    ])
-
-    train_at, train_ping, val_at, val_ping = split_train_val(imgage_dir='D:/aDeskfile/OAM/AT', split=0.8)
+    train_at, train_ping, val_at, val_ping = split_train_val(imgage_dir='D:/aDeskfile/OAM/AT', split=0.9)
     train_dataset = MyDataset(input_dir=train_at,
                               ground_dir=train_ping,
                               transform=transform)
@@ -40,27 +37,30 @@ def train_model(batch_size = 32,epochs = 100):
     val_dataset = MyDataset(input_dir=val_at,
                               ground_dir=val_ping,
                               transform=transform)
-    val_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True
-                                  , num_workers=2, drop_last=False)
+    val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False
+                                  , num_workers=4, drop_last=False)
 
-    learning_rate = 1e-4
     device = torch.device("cuda")
 
     model=UNet()
     #model.load_state_dict(torch.load('model.pth'))
     model = model.to(device)
+    summary(model, (1,128,128))
     loss_fn = nn.MSELoss()
     loss_fn = loss_fn.to(device)
+    learning_rate = 1e-2
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    milest = np.linspace(10, epochs, 10)
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=milest, gamma=0.5)
     # 4. 记录训练过程中的损失
     train_losses = []
     val_losses = []
+    minloss=1
     #训练
     model.train()
     for epoch in range(epochs):
         size = len(train_dataloader)*batch_size
         train_loss = 0.0
-        val_loss = 0.0
         for batch, (X, y) in enumerate(train_dataloader):
             X, y = X.to(device), y.to(device)
             pred = model(X)
@@ -71,12 +71,15 @@ def train_model(batch_size = 32,epochs = 100):
             train_loss += loss.item() * X.size(0)
             if batch % 20 == 0:
                 loss, current = loss.item(), (batch + 1) * len(X)
-                print(f"epoch: {epoch} loss: {loss:>5f}  [{current:>5d}/{size:>5d}]")
+                print(f"epoch: {epoch+1} loss: {loss:>5f}  [{current:>5d}/{size:>5d}]")
             #print(loss)
+        print("第%d个epoch的学习率：%f" % (epoch+1, optimizer.param_groups[0]['lr']))
+        scheduler.step()
         train_loss /= len(train_dataset)
         train_losses.append(train_loss)
         #评估
         model.eval()
+        val_loss = 0.0
         with torch.no_grad():
             for batch, (X, y)in enumerate(val_dataloader):
                 X, y = X.to(device), y.to(device)
@@ -87,6 +90,9 @@ def train_model(batch_size = 32,epochs = 100):
             val_losses.append(val_loss)
         # 5.3 打印训练过程中的损失
         print('[Epoch %d] Train avgLoss: %.5f | Val avgLoss: %.5f' % (epoch + 1, train_loss, val_loss))
+        if(val_loss<minloss):
+            minloss=val_loss
+            torch.save(model.state_dict(),'./weight/best.pth')
     # 7. 保存权重文件
     torch.save(model.state_dict(), './weight/model.pth')
     plt.plot(range(1, len(train_losses) + 1), train_losses, label='Training Loss')
@@ -94,11 +100,11 @@ def train_model(batch_size = 32,epochs = 100):
     plt.xlabel('Epoch')
     plt.ylabel('Loss')
     plt.legend()
-    plt.show()
+    #plt.show()
     timestamp = int(time.time())
     plt.savefig('./result/loss_curve{}.png'.format(timestamp))
 
 
 
 if __name__ == '__main__':
-    train_model()
+    train_model(batch_size = 16,epochs = 100)

@@ -44,8 +44,8 @@ def process_image(fpath1, fpath2):
 #Std:  [0.20764818]
     image = tf.io.read_file(fpath1)                  # 读取图像
     image = tf.image.decode_png(image,channels=1)  # jpg图像解码
-    image = tf.image.resize(image, [64,64]) /255.0# 原始图片大重设为(x, x), AlexNet的输入是224X224
-    image=(image-0.12622979)/.20764818
+    image = tf.image.resize(image, [64,64]) /255.0
+    image=(image-0.12622979)/0.20764818
     print('image1:',image.shape)
     #image1 = tf.io.read_file(fpath1[1])  # 读取图像
     #image1 = tf.image.decode_jpeg(image1, channels=1)  # jpg图像解码
@@ -57,7 +57,7 @@ def process_image(fpath1, fpath2):
     ground = tf.image.decode_png(ground, channels=1)
     #ground=ground/255.0
     ground = tf.image.resize(ground, [64,64])/255.0
-    #label = tf.one_hot(label, depth=2)               标签转成onehot格式,这里实验是标签2个类别数据
+    #label = tf.one_hot(label, depth=2)
     return image,ground
 
 def get_dataset(image_dir=None, image_dir2=None ,is_shuffle=False, batch_size=1):

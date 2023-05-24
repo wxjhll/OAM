@@ -14,17 +14,20 @@ import torch.nn as nn
 def data():
     transform = transforms.Compose([
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.16436058], std=[0.1736191]),
+        transforms.Normalize(mean=[0.12622979], std=[0.20764818])])
 
-    ])
 
-    inputdir2 = get_image_paths('D:/Ldata/NOAM/val/AT')
-    grounddir2 = get_image_paths('D:/Ldata/NOAM/val/ping')
-    val_dataset = MyDataset(input_dir=inputdir2,
-                              ground_dir=grounddir2,
+    train_at, train_ping, val_at, val_ping = split_train_val(imgage_dir='D:/aDeskfile/OAM/AT', split=0.8)
+    train_dataset = MyDataset(input_dir=train_at,
+                              ground_dir=train_ping,
                               transform=transform)
-    val_dataloader = DataLoader(val_dataset, batch_size=1, shuffle=True
-                                  , num_workers=2, drop_last=False)
+    train_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=True
+                                  , num_workers=4, drop_last=False)
+    val_dataset = MyDataset(input_dir=val_at,
+                            ground_dir=val_ping,
+                            transform=transform)
+    val_dataloader = DataLoader(val_dataset, batch_size=1, shuffle=False
+                                , num_workers=4, drop_last=False)
     return val_dataloader
 # 定义测试函数
 def test(net, test_loader, device):
@@ -59,7 +62,7 @@ def test(net, test_loader, device):
 if __name__ == '__main__':
     # 加载模型和测试数据集
     net =UNet()
-    net.load_state_dict(torch.load('model.pth'))
+    net.load_state_dict(torch.load('./weight/best.pth'))
     test_loader=data()
 
     # 定义设备
@@ -82,15 +85,18 @@ if __name__ == '__main__':
 
             # 计算损失和准确率
             loss = criterion(outputs, labels)
+            print(loss.item())
 
             # 累加损失和准确率
             total_loss += loss.item() * images.size(0)
             plt.subplot(121)
-            plt.imshow(labels[0].cpu().squeeze(), cmap='gray')
+            plt.imshow(labels[0].cpu().squeeze(), cmap='jet')
             plt.clim(0,1)
+            plt.title('true')
             plt.subplot(122)
-            plt.imshow(outputs[0].cpu().squeeze(), cmap='gray')
+            plt.imshow(outputs[0].cpu().squeeze(), cmap='jet')
             plt.clim(0, 1)
+            plt.title('pred')
             plt.show()
 
     # 将模型移动到设备上

@@ -76,7 +76,7 @@ if __name__ == '__main__':
     #inputdir=get_image_paths('D:/Ldata/NOAM/AT')
     #grounddir=get_image_paths('D:/Ldata/NOAM/ping')
     #print(inputdir)
-    train_at, train_ping, val_at, val_ping=split_train_val(imgage_dir='D:/aDeskfile/OAM/AT',split=0.8)
+    train_at, train_ping, val_at, val_ping=split_train_val(imgage_dir='D:/aDeskfile/OAM/AT',split=0.9)
     train_dataset = MyDataset(input_dir=train_at,
                               ground_dir=train_ping,
                               transform=None)

@@ -3,10 +3,10 @@ import tensorflow as tf
 
 def conv_block(inputs, filters, kernel_size=3):
     x = tf.keras.layers.Conv2D(filters, kernel_size, strides=1, padding="same")(inputs)
-    x = tf.keras.layers.BatchNormalization()(x)
+    #x = tf.keras.layers.BatchNormalization()(x)
     x = tf.keras.layers.ReLU()(x)
     x = tf.keras.layers.Conv2D(filters, kernel_size, strides=1, padding="same")(x)
-    x = tf.keras.layers.BatchNormalization()(x)
+    #x = tf.keras.layers.BatchNormalization()(x)
     x = tf.keras.layers.ReLU()(x)
     return x
 
@@ -15,10 +15,13 @@ def unet(input_shape=(128,128,1), num_classes=1):
     # 编码器
     inputs = tf.keras.layers.Input(input_shape)
     conv1 = conv_block(inputs, 64, kernel_size=3)
+
     pool1 = tf.keras.layers.MaxPool2D(pool_size=(2, 2))(conv1)
     conv2 = conv_block(pool1, 128, kernel_size=3)
+
     pool2 = tf.keras.layers.MaxPool2D(pool_size=(2, 2))(conv2)
     conv3 = conv_block(pool2, 256, kernel_size=3)
+
     pool3 = tf.keras.layers.MaxPool2D(pool_size=(2, 2))(conv3)
     conv4 = conv_block(pool3, 512, kernel_size=3)
 

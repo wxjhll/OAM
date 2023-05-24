@@ -13,3 +13,6 @@ def show_loss(history):
     plt.title('Loss')
     plt.xlabel('epoch')
     plt.savefig('loss_curve.png', dpi=100)
+import matplotlib.pyplot as plt
+import numpy as np
+

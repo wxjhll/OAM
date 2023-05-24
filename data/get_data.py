@@ -68,8 +68,8 @@ cn2=[]
 pmax=0
 pmin=0
 
-for i in tqdm(range(15000)):
-        Cn2 = 1e-14*((i)%100+1) # 湍流强度
+for i in tqdm(range(30000)):
+        Cn2 = 1e-13*((i)%10+1) # 湍流强度
         ping = get_ping(Cn2)  # 湍流相位屏
         E = np.fft.fft2(E1 * np.exp(1j * ping))
         H = get_H()  # 传递函数
@@ -97,7 +97,7 @@ for i in tqdm(range(15000)):
             pmin = np.min(ping)
 
 
-        ping=(ping+5.106364188889021)/(5.175492416401728 +5.106364188889021)
+        ping=(ping+ 5.342202200542821)/(4.903877148493669 +5.342202200542821)
         ping=ping*255
         ping = ping.astype(np.uint8)
         path_at='D:/aDeskfile/OAM/AT/'+str(i)+'.png'
