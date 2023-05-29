@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import cv2
-np.random.seed(43)
+np.random.seed(42)
 from tqdm import tqdm
 
 

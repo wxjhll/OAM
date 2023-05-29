@@ -10,13 +10,13 @@ class Conv(nn.Module):
             nn.Conv2d(C_in, C_out, 3, 1, 1),
             nn.BatchNorm2d(C_out),
             # 防止过拟合
-            nn.Dropout(0.3),
+            #nn.Dropout(0.3),
             nn.LeakyReLU(),
 
             nn.Conv2d(C_out, C_out, 3, 1, 1),
             nn.BatchNorm2d(C_out),
             # 防止过拟合
-            nn.Dropout(0.4),
+            #nn.Dropout(0.4),
             nn.LeakyReLU(),
         )
 
@@ -30,8 +30,9 @@ class DownSampling(nn.Module):
         super(DownSampling, self).__init__()
         self.Down = nn.Sequential(
             # 使用卷积进行2倍的下采样，通道数不变
-            nn.Conv2d(C, C, 3, 2, 1),
-            nn.LeakyReLU()
+            #nn.Conv2d(C, C, 3, 2, 1),
+            #nn.LeakyReLU()
+            nn.MaxPool2d(2)
         )
 
     def forward(self, x):
@@ -80,7 +81,7 @@ class UNet(nn.Module):
         self.C8 = Conv(128, 64)
         self.U4 = UpSampling(64)
         self.C9 = Conv(64, 32)
-        self.pred = torch.nn.Conv2d(in_channels=32,out_channels=1,kernel_size=1,padding=0)
+        self.pred = torch.nn.Conv2d(in_channels=32,out_channels=1,kernel_size=3,padding=1)
         self.Th = torch.nn.Sigmoid()
 
     def forward(self, x):

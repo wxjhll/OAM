@@ -10,7 +10,6 @@ train_data=train_data.prefetch(buffer_size=1)
 val_data=get_dataset(image_dir=val_at, image_dir2=val_ping, is_shuffle=False, batch_size=1)
 
 model=tf.keras.models.load_model('model.h5')
-
 for x,y in val_data:
     pred=model(x)
     mae=np.sqrt((pred-y)**2)

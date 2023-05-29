@@ -67,7 +67,9 @@ class MyDataset(Dataset):
         #ground_true = torchvision.transforms.Resize()(ground_true)
         if self.transform:
             input = self.transform(input)
+            ground_true = torchvision.transforms.Resize([64, 64])(ground_true)
             ground_true = torchvision.transforms.ToTensor()(ground_true)
+
 
         return input,ground_true
 

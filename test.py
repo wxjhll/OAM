@@ -13,11 +13,13 @@ import torch.nn as nn
 
 def data():
     transform = transforms.Compose([
+        transforms.Resize([64,64]),
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.12622979], std=[0.20764818])])
+        transforms.Normalize(mean=[0.12590456], std=[0.20678793])])
 
 
-    train_at, train_ping, val_at, val_ping = split_train_val(imgage_dir='D:/aDeskfile/OAM/AT', split=0.8)
+    train_at, train_ping, val_at, val_ping = split_train_val(imgage_dir='D:/aDeskfile/OAM/AT', split=0.9
+                                                             )
     train_dataset = MyDataset(input_dir=train_at,
                               ground_dir=train_ping,
                               transform=transform)
@@ -89,14 +91,23 @@ if __name__ == '__main__':
 
             # 累加损失和准确率
             total_loss += loss.item() * images.size(0)
-            plt.subplot(121)
+            mae=torch.abs(outputs.cpu().squeeze()-labels[0].cpu().squeeze())
+            print('ping_var:',torch.var(labels[0].cpu().squeeze()),'compention_var:',torch.var(mae))
+            plt.subplot(221)
             plt.imshow(labels[0].cpu().squeeze(), cmap='jet')
             plt.clim(0,1)
             plt.title('true')
-            plt.subplot(122)
+            plt.subplot(222)
             plt.imshow(outputs[0].cpu().squeeze(), cmap='jet')
             plt.clim(0, 1)
             plt.title('pred')
+            plt.subplot(223)
+            plt.imshow(images[0].cpu().squeeze(), cmap='jet')
+            plt.title('at')
+            plt.subplot(224)
+            plt.imshow(mae, cmap='jet')
+            plt.clim(0, 1)
+            plt.title('mae')
             plt.show()
 
     # 将模型移动到设备上

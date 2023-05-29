@@ -81,9 +81,8 @@ class net3(nn.Module):
 
         self.conv11 = nn.Sequential(
             nn.Conv2d(16, 1, kernel_size=3, stride=1, padding=1, bias=True),
-            nn.BatchNorm2d(16),
-            nn.ReLU()
         )
+        self.sigmoid=torch.nn.Sigmoid()
 
 
     def forward(self, x):
@@ -102,16 +101,17 @@ class net3(nn.Module):
         x = self.deconv3(x)
 
         x = self.conv11(x)
-        x = F.sigmoid(x)
+        x = self.sigmoid(x)
 
         return x
 
+if __name__ == '__main__':
+    net = net3()
+    #
+    # summary(net,(2,64,64),device='cpu')
 
-# net = Mynet()
-#
-# summary(net,(2,64,64),device='cpu')
+    a = torch.rand((1, 1, 64, 64))
+    b = net(a)
+    #
+    print(b.shape)
 
-# a = torch.rand((1,2,64,64))
-# b = net(a)
-#
-# print(b)

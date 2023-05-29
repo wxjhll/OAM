@@ -11,7 +11,7 @@ from model.net import UNet
 import torch.nn as nn
 from torchsummary import summary
 from model.net3 import net3
-
+from utils.myloss import my_loss
 def getdataloader(batch_size=32,transform=None):
     inputdir = get_image_paths('D:/Ldata/NOAM/AT')
     grounddir = get_image_paths('D:/Ldata/NOAM/ping')
@@ -24,6 +24,7 @@ def getdataloader(batch_size=32,transform=None):
 def train_model(batch_size = 32,epochs = 100):
 
     transform = transforms.Compose([
+        transforms.Resize([64,64]),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.12590456], std=[0.20678793])])
 
@@ -48,7 +49,7 @@ def train_model(batch_size = 32,epochs = 100):
     summary(model, (1,128,128))
     loss_fn = nn.MSELoss()
     loss_fn = loss_fn.to(device)
-    learning_rate = 1e-2
+    learning_rate = 1e-4
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     milest = np.linspace(10, epochs, 10)
     scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=milest, gamma=0.5)
@@ -74,7 +75,7 @@ def train_model(batch_size = 32,epochs = 100):
                 print(f"epoch: {epoch+1} loss: {loss:>5f}  [{current:>5d}/{size:>5d}]")
             #print(loss)
         print("第%d个epoch的学习率：%f" % (epoch+1, optimizer.param_groups[0]['lr']))
-        scheduler.step()
+        #scheduler.step()
         train_loss /= len(train_dataset)
         train_losses.append(train_loss)
         #评估
@@ -107,4 +108,4 @@ def train_model(batch_size = 32,epochs = 100):
 
 
 if __name__ == '__main__':
-    train_model(batch_size = 16,epochs = 100)
+    train_model(batch_size = 128,epochs = 100)
