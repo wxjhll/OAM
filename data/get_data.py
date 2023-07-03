@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import cv2
 np.random.seed(42)
 from tqdm import tqdm
-
+import os
 
 def cart2pol(x, y):
     xx, yy = np.meshgrid(x, y)
@@ -48,12 +48,12 @@ def get_H():
     return H
 
 
-L = 0.15  # 相位屏长度
-N = 128# 采样点数
+L = 0.4  # 相位屏长度
+N = 256# 采样点数
 dx = L / N  # 像素间距
-bochang = 1550e-9  # 波长
-z = 400  # 传播距离
-dz = 400  # 相位屏间隔
+bochang = 632e-9  # 波长
+z = 1000  # 传播距离
+dz = 1000 # 相位屏间隔
 k = 2 * np.pi / bochang  # 波数
 w0 = 0.03  # 束腰半径
 x = np.linspace(-L / 2, L / 2, N)
@@ -62,14 +62,16 @@ X, Y = np.meshgrid(x, y)
 [r, theta] = cart2pol(x, y)
 beta = 40 * np.pi / 180
 
-m = 0  # 拓扑核
-E1 = (r / w0) ** abs(m) * np.exp(-r ** 2 / w0 ** 2) * np.exp(1j * beta) * np.exp(-1j * m * theta)  # 环形涡旋光
 cn2=[]
 pmax=0
 pmin=0
 
-for i in tqdm(range(30000)):
-        Cn2 = 1e-13*((i)%10+1) # 湍流强度
+for m in range(1,9,1):
+    m2=-m
+    E1 = (r / w0) ** abs(m) * np.exp(-r ** 2 / w0 ** 2) * np.exp(1j * beta) * np.exp(-1j * m * theta) + \
+         (r / w0) ** abs(m2) * np.exp(-r ** 2 / w0 ** 2) * np.exp(1j * beta) * np.exp(-1j * m2 * theta)
+    for i in tqdm(range(200)):
+        Cn2 =2e-13 #1e-14*((i+1)/20) # 湍流强度
         ping = get_ping(Cn2)  # 湍流相位屏
         E = np.fft.fft2(E1 * np.exp(1j * ping))
         H = get_H()  # 传递函数
@@ -85,11 +87,16 @@ for i in tqdm(range(30000)):
         I1 = I1 / np.max(abs(E1))
         I1 = I1 * 255
         I1 = I1.astype(np.uint8)
-        '''
-        plt.figure()
-        plt.imshow(I_E)
-        plt.clim(0,255)
-        plt.show()
+        path_at = '/data/home/Deepin/mutil/at/L' + str(m)
+        if (os.path.exists(path_at)):
+            pass
+        else:
+            os.makedirs(path_at)
+        cv2.imwrite(path_at + '/'+str(i)+'.png', I_E)
+        # plt.figure()
+        # plt.imshow(I_E)
+        # plt.clim(0,255)
+        # plt.show()
         '''
         if np.max(ping) > pmax:
             pmax = np.max(ping)
@@ -100,14 +107,14 @@ for i in tqdm(range(30000)):
         ping=(ping+ 5.342202200542821)/(4.903877148493669 +5.342202200542821)
         ping=ping*255
         ping = ping.astype(np.uint8)
-        path_at='D:/aDeskfile/OAM/AT/'+str(i)+'.png'
-        path_ping='D:/aDeskfile/OAM/ping/'+str(i)+'.png'
+        path_at='/data/home/Deepin/DATA/AT/'+str(i)+'.png'
+        path_ping='/data/home/Deepin/DATA/ping/'+str(i)+'.png'
         cv2.imwrite(path_at, I_E)
         cv2.imwrite(path_ping, ping)
 
 
 print(pmax,pmin)
-
+'''
 
 
 

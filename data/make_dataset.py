@@ -20,11 +20,11 @@ def get_image_paths(image_dir=None):
     return paths
 def ground_path_map(image_dir=None):
     #D:/Ldata/NOAM/train/AT/5.png
-    strlist=image_dir.split('\\')
-    ground_true='D:/aDeskfile/OAM/ping/'+strlist[-1]
+    strlist=image_dir.split('/')
+    ground_true='/data/home/Deepin/DATA/ping/'+strlist[-1]
     return ground_true
 
-def split_train_val(imgage_dir='D:/aDeskfile/OAM/AT',split=0.8):
+def split_train_val(imgage_dir='/data/home/Deepin/DATA/AT',split=0.8):
     AT_dir = get_image_paths(imgage_dir)
     ping_dir=list(map(ground_path_map,AT_dir))
     num=len(AT_dir)
@@ -78,7 +78,7 @@ if __name__ == '__main__':
     #inputdir=get_image_paths('D:/Ldata/NOAM/AT')
     #grounddir=get_image_paths('D:/Ldata/NOAM/ping')
     #print(inputdir)
-    train_at, train_ping, val_at, val_ping=split_train_val(imgage_dir='D:/aDeskfile/OAM/AT',split=0.9)
+    train_at, train_ping, val_at, val_ping=split_train_val(imgage_dir='/data/home/Deepin/DATA/AT',split=0.9)
     train_dataset = MyDataset(input_dir=train_at,
                               ground_dir=train_ping,
                               transform=None)
@@ -95,5 +95,3 @@ if __name__ == '__main__':
         plt.show()
         #ax1.set_title('label {}'.format(label))
         #plt.pause(0.001)
-
-

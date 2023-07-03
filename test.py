@@ -17,8 +17,7 @@ def data():
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.12590456], std=[0.20678793])])
 
-
-    train_at, train_ping, val_at, val_ping = split_train_val(imgage_dir='D:/aDeskfile/OAM/AT', split=0.9
+    train_at, train_ping, val_at, val_ping = split_train_val(imgage_dir='/data/home/Deepin/DATA/AT/', split=0.9
                                                              )
     train_dataset = MyDataset(input_dir=train_at,
                               ground_dir=train_ping,
@@ -111,10 +110,6 @@ if __name__ == '__main__':
             plt.show()
 
     # 将模型移动到设备上
-
-
-
-
 
     # 调用测试函数进行测试
     #test_loss = test(net, test_loader, device)
