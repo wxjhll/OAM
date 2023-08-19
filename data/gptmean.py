@@ -3,7 +3,8 @@ import numpy as np
 import os
 DATA_DIR = 'D:/aDeskfile/OAM/AT'
 from tqdm import  tqdm
-# 1. 加载数据集中所有图片，并计算它们的均值和方差
+# 1. 加载数据集中所有图片，并计算它们的均值和方差Mean:  [0.15167561]
+# Std:  [0.21450585]
 mean = np.zeros((1,))
 std = np.zeros((1,))
 count = 0

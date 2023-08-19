@@ -8,10 +8,13 @@ import pathlib
 import numpy as np
 import matplotlib.pyplot as plt
 import random
+import torch
 seed = 1024
 random.seed(seed)     # python的随机性
 np.random.seed(seed)  # np的随机性
 os.environ['PYTHONHASHSEED'] = str(seed) # 设置python哈希种子，为了禁止hash随机化
+
+
 def get_image_paths(image_dir=None):
     data_path = pathlib.Path(image_dir)
     paths = list(data_path.glob('*'))
@@ -19,12 +22,13 @@ def get_image_paths(image_dir=None):
     #train_data_path = glob.glob( 'E:/data/train/*/*.jpg' )
     return paths
 def ground_path_map(image_dir=None):
-    #D:/Ldata/NOAM/train/AT/5.png
-    strlist=image_dir.split('\\')
-    ground_true='D:/aDeskfile/OAM/ping/'+strlist[-1]
+    #D:/Ldata/NOAM/train/at/5.png
+    ground_true=image_dir.replace('at','ping')
+    # strlist=image_dir.split('\\')
+    # ground_true='D:/aDeskfile/su_oam/ping/'+strlist[-1]
     return ground_true
 
-def split_train_val(imgage_dir='D:/aDeskfile/OAM/AT',split=0.8):
+def split_train_val(imgage_dir='D:/aDeskfile/multioam/at',split=0.8):
     AT_dir = get_image_paths(imgage_dir)
     ping_dir=list(map(ground_path_map,AT_dir))
     num=len(AT_dir)
@@ -44,7 +48,7 @@ def split_train_val(imgage_dir='D:/aDeskfile/OAM/AT',split=0.8):
     train_ping=ping_dir[0:splitpoint]
     val_ping=ping_dir[splitpoint:]
     print('训练集：',train_at[0],train_ping[0])
-    print('验证集：', val_at[1000], val_ping[1000])
+    print('验证集：', val_at[200], val_ping[200])
     return train_at,train_ping,val_at,val_ping
 
 
@@ -61,13 +65,17 @@ class MyDataset(Dataset):
 
     def __getitem__(self, idx):
         input=Image.open(self.input_dir[idx])
+        # input_noat = Image.open('D:/aDeskfile/slm/noat/1.png')
+
         #input=np.asarray(input)
         ground_true = Image.open(self.ground_dir[idx])
         #ground_true = np.asarray(ground_true)
         #ground_true = torchvision.transforms.Resize()(ground_true)
         if self.transform:
             input = self.transform(input)
-            ground_true = torchvision.transforms.Resize([64, 64])(ground_true)
+            # input_noat=self.transform(input_noat)
+            # input=torch.stack((input_at,input_noat), 0)
+            ground_true = torchvision.transforms.Resize([128,128])(ground_true)
             ground_true = torchvision.transforms.ToTensor()(ground_true)
 
 
@@ -78,10 +86,14 @@ if __name__ == '__main__':
     #inputdir=get_image_paths('D:/Ldata/NOAM/AT')
     #grounddir=get_image_paths('D:/Ldata/NOAM/ping')
     #print(inputdir)
-    train_at, train_ping, val_at, val_ping=split_train_val(imgage_dir='D:/aDeskfile/OAM/AT',split=0.9)
+    transform = torchvision.transforms.Compose([
+        torchvision.transforms.Resize((64,64)),
+        torchvision.transforms.ToTensor(),
+        torchvision.transforms.Normalize(mean=[0.5], std=[0.5])])
+    train_at, train_ping, val_at, val_ping=split_train_val(imgage_dir='D:/aDeskfile/slmguss/at',split=0.8)
     train_dataset = MyDataset(input_dir=train_at,
                               ground_dir=train_ping,
-                              transform=None)
+                              transform=transform)
 
     plt.figure()
     for i,(input,ground) in enumerate(train_dataset):
@@ -89,9 +101,9 @@ if __name__ == '__main__':
         ax1 = plt.subplot(121)
         ax2 = plt.subplot(122)
         ax1.axis('off')
-        ax1.imshow(input,cmap='jet')
+        ax1.imshow(input.squeeze(),cmap='jet')
         ax2.axis('off')
-        ax2.imshow(ground,cmap='jet')
+        ax2.imshow(ground.squeeze(),cmap='jet')
         plt.show()
         #ax1.set_title('label {}'.format(label))
         #plt.pause(0.001)
