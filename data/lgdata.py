@@ -3,8 +3,9 @@ import math
 import cv2 as cv
 import  matplotlib.pyplot as plt
 from tqdm import tqdm
-#np.random.seed(1998)
-
+np.random.seed(1998)
+import  scipy.io as sio
+from buchang import cnn_ping
 def lg_light(lambda_val, w0, p, z, theta, r, m):
     k = 2 * np.pi / lambda_val
     f = np.pi * w0 ** 2 / lambda_val
@@ -38,7 +39,7 @@ def get_ping(Cn2):
     y = np.linspace(-Nxy / 2, Nxy / 2, Nxy)
     X, Y = np.meshgrid(x, y)
     l0 = 0.0001
-    L0 = 2000
+    L0 = 59
     km = 5.92 / l0
     k0 = 2 * np.pi / L0
     kr = np.sqrt((2 * np.pi * X / L) ** 2 + (2 * np.pi * Y / L) ** 2)
@@ -87,7 +88,7 @@ p = 0
 z = 0
 m = 3
 
-dz=1000
+dz=800
 # Coordinate settings
 L = 0.2
 x = np.linspace(-L/2, L/2, Nxy)
@@ -104,7 +105,7 @@ I1, E1 = lg_light(lambda_val, w, p, z, theta, r, -2)
 I2, E2 = lg_light(lambda_val, w, p, z, theta, r, 7)
 H = get_H()  # 传递函数
 H = np.fft.fftshift(H)
-Cn2=1e-13
+
 ping=0
 E_c=E0
 E_cir=0
@@ -120,37 +121,50 @@ distance_matrix = np.fromfunction(lambda i, j: np.sqrt((i - center_x)**2 + (j - 
 
 # 根据距离判断是否在圆内，圆内的点数值设置为0，圆外的点数值设置为1
 matrix[distance_matrix<= radius] = 1
-
-for num in tqdm(range(10000)):
-
-    ping = get_ping(Cn2)  # 湍流相位屏
-    ping = (ping % (2 * np.pi))
-
+max=0
+min=0
+for num in tqdm(range(1)):
+    #Cn2=(num%5+5)*1e-14
+    Cn2=1e-13
+    np.random.seed(19)
+    ping = get_ping(Cn2)*matrix  # 湍流相位屏
+    bu=cnn_ping('../at.png')
+    bu=cv.resize(bu,(256,256))
+    # if np.max(ping)>max:
+    #     max=np.max(ping)
+    # if np.min(ping)<min:
+    #     min=np.min(ping)
+    #ping = (ping % (2 * np.pi))
     # E2 = np.fft.fft2(E_c * np.exp(1j * ping))
     # E = np.fft.ifft2(E2 * H)
 
-    ping = ping*matrix
-    E_cir = np.fft.fft2(E_c * np.exp(1j * ping))
+    ping1 = (bu-ping)
+    E_cir = np.fft.fft2(E_c * np.exp(1j * ping1))
     E_cir = np.fft.ifft2(E_cir * H)
 
     I=np.abs( E_cir) ** 2
     I=(I/np.max(I)*255).astype(np.uint8)
-    cv.imwrite('D:/aDeskfile/su_oam/at/{}.png'.format(num), I)
-    slm_phase = (ping/(2 * np.pi)) *255
-    slm_phase = slm_phase.astype(np.uint8)
-    cv.imwrite('D:/aDeskfile/su_oam/ping/{}.png'.format(num), slm_phase)
+    #cv.imwrite('../at.png', I)
+    #cv.imwrite('D:/aDeskfile/oam_mat/at/{}.png'.format(num), I)
+    #8.538194594668175 -7.630559951549822
+    # slm_phase=255*(ping+7.630559951549822)/(8.538194594668175+7.630559951549822)
+    # slm_phase = (ping/(2 * np.pi)) *255
+    # slm_phase = slm_phase.astype(np.uint8)
+    ping_mat={'ping':ping}
+    #sio.savemat('D:/aDeskfile/oam_mat/ping/{}.mat'.format(num), ping_mat)
+    #cv.imwrite('D:/aDeskfile/su_oam/ping/{}.png'.format(num), slm_phase)
 
 # I = np.abs(E) ** 2
 # I_cir = np.abs(E_cir) ** 2
 #
-# plt.figure()
-# plt.subplot(1, 3, 1)
-# plt.imshow(I, cmap='jet')
-# plt.subplot(1, 3, 2)
-# plt.imshow(I_cir, cmap='jet')
-# plt.subplot(1, 3, 3)
-# plt.imshow(matrix, cmap='gray')
-# plt.show()
+    plt.figure()
+    plt.subplot(1, 3, 1)
+    plt.imshow(I, cmap='jet')
+    plt.subplot(1, 3, 2)
+    plt.imshow(ping, cmap='jet')
+    plt.subplot(1, 3, 3)
+    plt.imshow(bu, cmap='jet')
+    plt.show()
 
 
 

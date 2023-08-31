@@ -19,8 +19,10 @@ from tqdm import tqdm
 train_data_path = glob.glob('D:/aDeskfile/slm/ping_pre/*.png' )
 for path in tqdm(train_data_path):
     ping=cv.imread(path,0)
-    mask_ping = ping[75:435,75:435]
+    # mask_ping = ping[96:416,96:416]
+    mask_ping = ping[75:435, 75:435]
 
-    # slm_phase = mask_ping.astype(np.uint8)
+
+    #slm_phase = mask_ping.astype(np.uint8)
     path1=path.replace('ping_pre','ping')
     cv.imwrite(path1,mask_ping)

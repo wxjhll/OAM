@@ -7,6 +7,6 @@ class my_loss(nn.Module):
         super().__init__()
 
     def forward(self, x, y):
-        loss1=torch.pow((x - y), 2)
+        loss1=torch.pow(x-y, 2)
         loss2=torch.abs(x-y)
-        return torch.mean(loss1+0.1*loss2)
+        return torch.mean(loss1+loss2)

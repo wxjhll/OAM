@@ -83,13 +83,13 @@ class down(nn.Module):
 
 
 class up(nn.Module):
-    def __init__(self, in_ch, out_ch, bilinear=True):
+    def __init__(self,in_ch, out_ch, bilinear=True):
         super(up, self).__init__()
 
         if bilinear:
             self.up = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
         else:
-            self.up = nn.ConvTranspose2d(in_ch // 2, in_ch // 2, 2, stride=2)
+            self.up = nn.ConvTranspose2d(in_ch//2,in_ch//2,2, stride=2)
 
         self.conv = double_conv(in_ch, out_ch)
 
@@ -169,40 +169,41 @@ class Shallow_SeResUNet(nn.Module):
         super(Shallow_SeResUNet, self).__init__()
         self.deep_supervision = deep_supervision
         #big
-        # self.inc = inconv(n_channels, 64)
-        # self.down1 = down(64, 64)
-        # self.down2 = down(64, 128)
-        # self.down3 = down(128, 256)
-        # self.down4 = down(256, 256)
-        # self.up1 = up(256 + 256, 128)
-        # self.up2 = up(128 + 128, 128)
-        # self.up3 = up(128 + 64, 64)
-        # self.up4 = up(64 + 64, 64)
-        # self.outc = outconv(64, n_classes, dropout, rate)
+        self.inc = inconv(n_channels, 64)
+        self.down1 = down(64, 64)
+        self.down2 = down(64, 128)
+        self.down3 = down(128, 256)
+        self.down4 = down(256, 256)
+        self.up1 = up(256 + 256, 128)
+        self.up2 = up(128 + 128, 128)
+        self.up3 = up(128 + 64, 64)
+        self.up4 = up(64 + 64, 64)
+        self.outc = outconv(64, n_classes, dropout, rate)
         # self.dsoutc4 = outconv(128, n_classes)
         # self.dsoutc3 = outconv(128, n_classes)
         # self.dsoutc2 = outconv(64, n_classes)
         # self.dsoutc1 = outconv(64, n_classes)
-        self.down_pre1= down(32, 32)
-        self.down_pre2 = down(32, 32)
-        self.up_after1=nn.ConvTranspose2d(32, 32, 2, stride=2)
-        self.up_after2=nn.ConvTranspose2d(32, 32, 2, stride=2)
 
-        self.inc = inconv(n_channels, 32)
-        self.down1 = down(32, 32)
-        self.down2 = down(32, 64)
-        self.down3 = down(64, 128)
-        self.down4 = down(128, 128)
-        self.up1 = up(128 + 128, 64)
-        self.up2 = up(64 + 64, 64)
-        self.up3 = up(64 + 32, 32)
-        self.up4 = up(32 + 32, 32)
-
-        self.outc = outconv(32, n_classes, dropout, rate)
-        self.dsoutc4 = outconv(64, n_classes)
-        self.dsoutc3 = outconv(64, n_classes)
-        self.dsoutc2 = outconv(32, n_classes)
-        self.dsoutc1 = outconv(32, n_classes)
+        # self.down_pre1= down(32, 32)
+        # self.down_pre2 = down(32, 32)
+        # self.up_after1=nn.ConvTranspose2d(32, 32, 2, stride=2)
+        # self.up_after2=nn.ConvTranspose2d(32, 32, 2, stride=2)
+        #
+        # self.inc = inconv(n_channels, 32)
+        # self.down1 = down(32, 32)
+        # self.down2 = down(32, 64)
+        # self.down3 = down(64, 128)
+        # self.down4 = down(128, 128)
+        # self.up1 = up(128 + 128, 64,bilinear=True)
+        # self.up2 = up(64 + 64, 64,bilinear=True)
+        # self.up3 = up(64 + 32, 32,bilinear=True)
+        # self.up4 = up(32 + 32, 32,bilinear=True)
+        #
+        # self.outc = outconv(32, n_classes, dropout, rate)
+        # self.dsoutc4 = outconv(64, n_classes)
+        # self.dsoutc3 = outconv(64, n_classes)
+        # self.dsoutc2 = outconv(32, n_classes)
+        # self.dsoutc1 = outconv(32, n_classes)
 
     def forward(self, x):
         x1 = self.inc(x)
@@ -221,41 +222,41 @@ class Shallow_SeResUNet(nn.Module):
         # after1=self.up_after1(x11)
         # after2 = self.up_after2(after1)
         x0 = self.outc(x11)
-        x0 = nn.Sigmoid()(x0 )
-        if self.deep_supervision and self.training:
-            x11 = F.interpolate(self.dsoutc1(x11), x0.shape[2:], mode='bilinear')
-            x22 = F.interpolate(self.dsoutc2(x22), x0.shape[2:], mode='bilinear')
-            x33 = F.interpolate(self.dsoutc3(x33), x0.shape[2:], mode='bilinear')
-            x44 = F.interpolate(self.dsoutc4(x44), x0.shape[2:], mode='bilinear')
-
-            return x0, x11, x22, x33, x44
-        else:
-            return x0
+        #x0 = nn.Sigmoid()(x0 )
+        # if self.deep_supervision and self.training:
+        #     x11 = F.interpolate(self.dsoutc1(x11), x0.shape[2:], mode='bilinear')
+        #     x22 = F.interpolate(self.dsoutc2(x22), x0.shape[2:], mode='bilinear')
+        #     x33 = F.interpolate(self.dsoutc3(x33), x0.shape[2:], mode='bilinear')
+        #     x44 = F.interpolate(self.dsoutc4(x44), x0.shape[2:], mode='bilinear')
+        #
+        #     return x0, x11, x22, x33, x44
+        # else:
+        return x0
 
 
 if __name__ == '__main__':
-    import os
-
-    os.environ['CUDA_VISIBLE_DEVICES'] = '6'
-
-    def weights_init(m):
-        classname = m.__class__.__name__
-        # print(classname)
-        if classname.find('Conv') != -1:
-            torch.nn.init.xavier_uniform_(m.weight.data)
-            if m.bias is not None:
-                torch.nn.init.constant_(m.bias.data, 0.0)
-
+    # import os
+    #
+    # os.environ['CUDA_VISIBLE_DEVICES'] = '6'
+    #
+    # def weights_init(m):
+    #     classname = m.__class__.__name__
+    #     # print(classname)
+    #     if classname.find('Conv') != -1:
+    #         torch.nn.init.xavier_uniform_(m.weight.data)
+    #         if m.bias is not None:
+    #             torch.nn.init.constant_(m.bias.data, 0.0)
 
     # model = SeResUNet(3, 3, deep_supervision=True).cuda()
-    model = Shallow_SeResUNet(3, 3, deep_supervision=True).cuda()
-    model.apply(weights_init)
+    model = Shallow_SeResUNet(n_channels=1, n_classes=1, deep_supervision = False,
+                            dropout = False, rate = 0.3)
+    # model.apply(weights_init)
+    x = torch.randn((1, 1, 128, 128)).cuda()
 
-    x = torch.randn((1, 3, 256, 256)).cuda()
 
-    for i in range(1000):
-        y0, y1, y2, y3, y4 = model(x)
-        print(y0.shape, y1.shape, y2.shape, y3.shape, y4.shape)
+    # for i in range(1000):
+    #     y0, y1, y2, y3, y4 = model(x)
+    #     print(y0.shape, y1.shape, y2.shape, y3.shape, y4.shape)
 
 # print(model.weight)
 

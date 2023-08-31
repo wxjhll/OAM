@@ -1,19 +1,11 @@
-import torch
-import torchvision
 from torchvision import datasets, models, transforms
 import matplotlib.pyplot as plt
-import time
 from data.make_dataset import *
-from model import unet1
-from model.net3 import net3
-from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
-from model.net import UNet
 import torch.nn as nn
-from model.someUnet import Unet
 from tqdm import tqdm
 from model.se_reunet import Shallow_SeResUNet
-import torch.nn.functional as F
+from unet import TransUnet
 
 def data(img_dir,split=0.8):
     transform = transforms.Compose([
@@ -35,34 +27,42 @@ def data(img_dir,split=0.8):
                                 , num_workers=4, drop_last=False)
     return train_dataloader,val_dataloader
 
+
 if __name__ == '__main__':
     # 加载模型和测试数据集
+    transunet = TransUnet(in_channels=1, img_dim=128, vit_blocks=1,
+                          vit_dim_linear_mhsa_block=512, classes=1)
     net =Shallow_SeResUNet(n_channels=1, n_classes=1, deep_supervision = False,
                             dropout = False, rate = 0.1)
-    net.load_state_dict(torch.load('./weight/best{}.pth'))
-    train_loader, test_loader=data(img_dir='D:/aDeskfile/slm/at',split=0.95)
 
+
+    net.load_state_dict(torch.load('./weight/modelslm1693414975.pth'))
+    # for name, param in net.named_parameters():
+    #     print(f'Layer: {name}, Size: {param.size()}, Values: {param}')
+    train_loader, test_loader=data(img_dir='D:/aDeskfile/oam_m/at',split=0.95)
+    optimizer = torch.optim.Adam(net.parameters(), lr=1e-6)
     # 定义设备
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cuda')
     net.to(device)
-    net.eval()
+
 
     # 定义损失函数和准确率计算器
     criterion = nn.MSELoss()
     total_loss = 0.0
-
+    net.eval()
     # 在测试集上进行循环
     smaple_loss=[]
     with torch.no_grad():
-        for images, labels in tqdm(test_loader):
+        for images, labels in test_loader:
             # 将图像和标签移动到 GPU 上（如果有的话）
             images, labels = images.to(device), labels.to(device)
 
             # 前向传播计算预测结果
             outputs = net(images)
-            #outputs = F.interpolate(outputs, [512,512], mode='bilinear')
+            #outputs = F.interpolate(outputs, [320,320], mode='bilinear')
             # 计算损失和准确率
             loss = criterion(outputs, labels)
+
            #print(loss.item())
             smaple_loss.append(loss.item())
 
@@ -71,14 +71,15 @@ if __name__ == '__main__':
             #累加损失和准确率
             total_loss += loss.item() * images.size(0)
             mae=torch.abs(outputs.cpu().squeeze()-labels[0].cpu().squeeze())
-            print('ping_var:',torch.var(labels[0].cpu().squeeze()),'compention_var:',torch.var(mae))
+            print('ping_var:',torch.var(labels[0].cpu().squeeze()),
+                  'compention_var:',torch.var(mae))
             plt.subplot(221)
             plt.imshow(labels[0].cpu().squeeze(), cmap='jet')
-            plt.clim(0,1)
+            #plt.clim(0,1)
             plt.title('true')
             plt.subplot(222)
             plt.imshow(outputs[0].cpu().squeeze(), cmap='jet')
-            plt.clim(0, 1)
+            #plt.clim(0, 1)
             plt.title('pred')
             plt.subplot(223)
             plt.imshow(images[0].cpu().squeeze(), cmap='jet')
