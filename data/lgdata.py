@@ -5,7 +5,7 @@ import  matplotlib.pyplot as plt
 from tqdm import tqdm
 np.random.seed(1998)
 import  scipy.io as sio
-from buchang import cnn_ping
+#from buchang import cnn_ping
 def lg_light(lambda_val, w0, p, z, theta, r, m):
     k = 2 * np.pi / lambda_val
     f = np.pi * w0 ** 2 / lambda_val
@@ -39,7 +39,7 @@ def get_ping(Cn2):
     y = np.linspace(-Nxy / 2, Nxy / 2, Nxy)
     X, Y = np.meshgrid(x, y)
     l0 = 0.0001
-    L0 = 59
+    L0 = 50
     km = 5.92 / l0
     k0 = 2 * np.pi / L0
     kr = np.sqrt((2 * np.pi * X / L) ** 2 + (2 * np.pi * Y / L) ** 2)
@@ -52,43 +52,22 @@ def get_ping(Cn2):
     ping = np.real(ping)
     return ping
 def get_H():
-
     dx = L / Nxy
     fx = np.linspace(-1 / (2 * dx), 1 / (2 * dx), Nxy)
     fy = np.linspace(-1 / (2 * dx), 1 / (2 * dx), Nxy)
     [Fx, Fy] = np.meshgrid(fx, fy)
     H = np.exp(1j * k * dz * np.sqrt(1 - (lambda_val  * Fx) ** 2 - (lambda_val  * Fy) ** 2))
     return H
-def Ger_Sax_algo(img,img_at,max_iter):
-    h, w = img.shape
-    pm_s = np.ones((h, w))
-    pm_f = 0
-    am_s = np.sqrt(img)
-    am_f =np.sqrt(img_at)
-
-    signal_s = am_s*np.exp(pm_s * 1j)
-
-    for iter in range(max_iter):
-        signal_f = np.fft.fft2(signal_s)
-        pm_f = np.angle(signal_f)
-        signal_f =  am_f*np.exp(pm_f * 1j)
-        signal_s = np.fft.ifft2(signal_f)
-        pm_s = np.angle(signal_s)
-        signal_s = am_s*np.exp(pm_s * 1j)
-
-    pm =pm_f
-    return pm
-
 
 Nxy = 256
 lambda_val = 632e-9
 k = 2 * math.pi / lambda_val
-w = 0.06
+w = 0.03
 p = 0
 z = 0
-m = 3
 
-dz=800
+
+dz=1500
 # Coordinate settings
 L = 0.2
 x = np.linspace(-L/2, L/2, Nxy)
@@ -99,10 +78,7 @@ theta, r = np.arctan2(Y, X), np.sqrt(X**2 + Y**2)
 del_f = 1 / L
 dx = L / Nxy
                  # Azimuthal mode index
-m='3-2'
-I0, E0 = lg_light(lambda_val, w, p, z, theta, r, 0)
-I1, E1 = lg_light(lambda_val, w, p, z, theta, r, -2)
-I2, E2 = lg_light(lambda_val, w, p, z, theta, r, 7)
+I0, E0 = lg_light(lambda_val, w, p, z, theta, r, 3)
 H = get_H()  # 传递函数
 H = np.fft.fftshift(H)
 
@@ -110,26 +86,23 @@ ping=0
 E_c=E0
 E_cir=0
 matrix = np.zeros((256,256))
-
-    # 设置圆的中心坐标和半径
+# 设置圆的中心坐标和半径
 center_x = 128
 center_y = 128
 radius = 128
-
 # 计算每个点到中心的距离
 distance_matrix = np.fromfunction(lambda i, j: np.sqrt((i - center_x)**2 + (j - center_y)**2), matrix.shape)
-
 # 根据距离判断是否在圆内，圆内的点数值设置为0，圆外的点数值设置为1
 matrix[distance_matrix<= radius] = 1
 max=0
 min=0
-for num in tqdm(range(1)):
+for num in tqdm(range(5)):
     #Cn2=(num%5+5)*1e-14
     Cn2=1e-13
-    np.random.seed(19)
-    ping = get_ping(Cn2)*matrix  # 湍流相位屏
-    bu=cnn_ping('../at.png')
-    bu=cv.resize(bu,(256,256))
+
+    ping = get_ping(Cn2)  # 湍流相位屏
+    #bu=cnn_ping('../at.png')
+    #bu=cv.resize(bu,(256,256))
     # if np.max(ping)>max:
     #     max=np.max(ping)
     # if np.min(ping)<min:
@@ -138,8 +111,7 @@ for num in tqdm(range(1)):
     # E2 = np.fft.fft2(E_c * np.exp(1j * ping))
     # E = np.fft.ifft2(E2 * H)
 
-    ping1 = (bu-ping)
-    E_cir = np.fft.fft2(E_c * np.exp(1j * ping1))
+    E_cir = np.fft.fft2(E_c * np.exp(1j * ping))
     E_cir = np.fft.ifft2(E_cir * H)
 
     I=np.abs( E_cir) ** 2
@@ -157,14 +129,34 @@ for num in tqdm(range(1)):
 # I = np.abs(E) ** 2
 # I_cir = np.abs(E_cir) ** 2
 #
-    plt.figure()
-    plt.subplot(1, 3, 1)
-    plt.imshow(I, cmap='jet')
-    plt.subplot(1, 3, 2)
+
+    # 创建一个2x2的图形
+    plt.figure(figsize=(6, 4))
+    # 绘制子图1
+    plt.subplot(2, 2, 1)
     plt.imshow(ping, cmap='jet')
-    plt.subplot(1, 3, 3)
-    plt.imshow(bu, cmap='jet')
+    plt.title('ping')
+    plt.colorbar(aspect=10)
+    # 绘制子图2
+    plt.subplot(2, 2, 2)
+    plt.imshow(I, cmap='jet')
+    plt.title('I')
+    plt.colorbar(aspect=10)
+    # 绘制子图3
+    # plt.subplot(2, 2, 3)
+    # plt.imshow(data3, cmap='inferno')
+    # plt.title('Subplot 3')
+    # plt.colorbar(aspect=10)
+    # # 绘制子图4
+    # plt.subplot(2, 2, 4)
+    # plt.imshow(data4, cmap='magma')
+    # plt.title('Subplot 4')
+    # plt.colorbar(aspect=10)
+    # 调整子图之间的间距
+    plt.tight_layout()
+    # 显示图形
     plt.show()
+
 
 
 

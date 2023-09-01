@@ -27,13 +27,13 @@ for _ in range(100):
     fai3 = (kr**2 + k0**2) ** (-11 / 6) * np.exp(-(kr**2) / (kl**2))
     fai = fai1 * fai2 * fai3 * (2 * np.pi / L) ** 2
     ping = np.fft.fft2(np.fft.fftshift(C * np.sqrt(fai)))
-    ping = np.abs(ping)
+    ping = np.real(ping)
     # if np.max(ping)>max:
     #     max=np.max(ping)
     # print(max)
 
     plt.figure(figsize=(8, 6))
     plt.imshow(ping, cmap='jet')
-    plt.clim(0,57.44)
+    # plt.clim(0,57.44)
     plt.colorbar()
     plt.show()
