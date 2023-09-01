@@ -6,7 +6,7 @@ import numpy as np
 from typing import Optional
 from einops import rearrange, repeat
 from einops.layers.torch import Rearrange
-
+from torchsummary import summary
 class PatchPartition(nn.Module):
     def __init__(self, patch_height, patch_width):
         super(PatchPartition, self).__init__()
@@ -682,5 +682,6 @@ if __name__ == '__main__':
                          class_num=1)
 
     swin_unet.to(device)
+    summary(swin_unet, (1, 128, 128))
     out = swin_unet(img)
     print(out.shape)

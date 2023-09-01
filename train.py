@@ -52,7 +52,7 @@ def train_model(batch_size = 32,epochs = 100,mylr=1e-4,train_dir='',wname='',
     model=mymodel
     #model.load_state_dict(torch.load('./weight/modelslm1693414975.pth'))
     model = model.to(device)
-    #summary(model,(1,128,128))
+    summary(model,(1,128,128))
     loss_fn =my_loss()
     loss_fn = loss_fn.to(device)
     learning_rate = mylr
@@ -131,8 +131,8 @@ if __name__ == '__main__':
     model=Shallow_SeResUNet(n_channels=1, n_classes=1, deep_supervision = False,
                             dropout = False, rate = 0.3)
 
-    train_model(batch_size = 32, epochs = 60,    train_dir='D:/aDeskfile/oam_m/at'
+    train_model(batch_size = 16, epochs = 60,    train_dir='D:/aDeskfile/oam_m/at'
             ,wname='b_256_',    size=[128,128],  size_=(128,128),
-            mymodel= swin_unet,     split=0.95,      mylr=1e-3   )
+            mymodel= swin_unet,     split=0.95,      mylr=1e-4   )
 
 
