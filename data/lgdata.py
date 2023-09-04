@@ -53,6 +53,7 @@ def get_ping(Cn2):
     return ping
 
 def get_ping2(Cn2,dz):
+    #Hill谱
     N=128
     L=N*0.00047
     x = np.linspace(-N / 2, N / 2, N)
