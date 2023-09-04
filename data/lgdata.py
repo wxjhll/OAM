@@ -48,9 +48,36 @@ def get_ping(Cn2):
     ra = np.random.randn(Nxy, Nxy)
     rb = np.random.randn(Nxy, Nxy)
     rr = ra + 1j * rb
-    ping = np.sqrt(C) * Nxy ** 2 * np.fft.ifft2(rr * np.sqrt(pusai))
+    ping = C* Nxy ** 2 * np.fft.ifft2(rr * np.sqrt(pusai))
     ping = np.real(ping)
     return ping
+
+def get_ping2(Cn2,dz):
+    N=128
+    L=N*0.00047
+    x = np.linspace(-N / 2, N / 2, N)
+    y = np.linspace(-N / 2, N / 2, N)
+    X, Y = np.meshgrid(x, y)
+    max = 0
+    for _ in range(1):
+        ra = np.random.randn(N, N)
+        rb = np.random.randn(N, N)
+        C = ra + 1j * rb
+        lamda = 1.55e-6  # 波长
+        l0 = 0.0001  # 内外尺度
+        L0 = 50
+
+        k = 2 * np.pi / lamda  # 波数
+        kl = 3.3 / l0
+        k0 = 2 * np.pi / L0
+        kr = np.sqrt((2 * np.pi * X / L) ** 2 + (2 * np.pi * Y / L) ** 2)
+        fai1 = 2 * np.pi * k ** 2 * dz
+        fai2 = 0.033 * Cn2 * (1 + 1.802 * kr / kl - 0.254 * (kr / kl) ** (7 / 6))
+        fai3 = (kr ** 2 + k0 ** 2) ** (-11 / 6) * np.exp(-(kr ** 2) / (kl ** 2))
+        fai = fai1 * fai2 * fai3 * (2 * np.pi / L) ** 2
+        ping = np.sqrt(2 * np.pi / L) * N ** 2 * np.fft.ifft2(np.fft.fftshift(C * np.sqrt(fai)))
+        ping = np.abs(ping)
+        return ping
 def get_H():
     dx = L / Nxy
     fx = np.linspace(-1 / (2 * dx), 1 / (2 * dx), Nxy)
@@ -59,26 +86,22 @@ def get_H():
     H = np.exp(1j * k * dz * np.sqrt(1 - (lambda_val  * Fx) ** 2 - (lambda_val  * Fy) ** 2))
     return H
 
-Nxy = 256
-lambda_val = 632e-9
+Nxy = 128
+lambda_val = 1550e-9
 k = 2 * math.pi / lambda_val
-w = 0.03
+w = 0.02
 p = 0
 z = 0
-
-
-dz=1500
+dz=60
 # Coordinate settings
-L = 0.2
+L =0.00047*Nxy
 x = np.linspace(-L/2, L/2, Nxy)
 y = np.linspace(-L/2, L/2, Nxy)
 X, Y = np.meshgrid(x, y)
 theta, r = np.arctan2(Y, X), np.sqrt(X**2 + Y**2)
-
 del_f = 1 / L
 dx = L / Nxy
-                 # Azimuthal mode index
-I0, E0 = lg_light(lambda_val, w, p, z, theta, r, 3)
+I0, E0 = lg_light(lambda_val, w, p, z, theta, r, 0)
 H = get_H()  # 传递函数
 H = np.fft.fftshift(H)
 
@@ -96,17 +119,15 @@ distance_matrix = np.fromfunction(lambda i, j: np.sqrt((i - center_x)**2 + (j - 
 matrix[distance_matrix<= radius] = 1
 max=0
 min=0
-for num in tqdm(range(5)):
-    #Cn2=(num%5+5)*1e-14
-    Cn2=1e-13
-
-    ping = get_ping(Cn2)  # 湍流相位屏
+for num in tqdm(range(10)):
+    Cn2=(num%10+1)*1e-14
+    ping = get_ping2(Cn2,dz)  # 湍流相位屏
     #bu=cnn_ping('../at.png')
     #bu=cv.resize(bu,(256,256))
-    # if np.max(ping)>max:
-    #     max=np.max(ping)
-    # if np.min(ping)<min:
-    #     min=np.min(ping)
+    if np.max(ping)>max:
+        max=np.max(ping)
+    if np.min(ping)<min:
+        min=np.min(ping)
     #ping = (ping % (2 * np.pi))
     # E2 = np.fft.fft2(E_c * np.exp(1j * ping))
     # E = np.fft.ifft2(E2 * H)
@@ -117,20 +138,14 @@ for num in tqdm(range(5)):
     I=np.abs( E_cir) ** 2
     I=(I/np.max(I)*255).astype(np.uint8)
     #cv.imwrite('../at.png', I)
-    #cv.imwrite('D:/aDeskfile/oam_mat/at/{}.png'.format(num), I)
-    #8.538194594668175 -7.630559951549822
-    # slm_phase=255*(ping+7.630559951549822)/(8.538194594668175+7.630559951549822)
-    # slm_phase = (ping/(2 * np.pi)) *255
-    # slm_phase = slm_phase.astype(np.uint8)
-    ping_mat={'ping':ping}
+    #cv.imwrite('D:/aDeskfile/OAM/at/{}.png'.format(num), I)
+    slm_phase=255*ping/12.074454369318497
+    #slm_phase = (ping/(2 * np.pi)) *255
+    slm_phase = slm_phase.astype(np.uint8)
+    # ping_mat={'ping':ping}
     #sio.savemat('D:/aDeskfile/oam_mat/ping/{}.mat'.format(num), ping_mat)
-    #cv.imwrite('D:/aDeskfile/su_oam/ping/{}.png'.format(num), slm_phase)
+    #cv.imwrite('D:/aDeskfile/OAM/ping/{}.png'.format(num), slm_phase)
 
-# I = np.abs(E) ** 2
-# I_cir = np.abs(E_cir) ** 2
-#
-
-    # 创建一个2x2的图形
     plt.figure(figsize=(6, 4))
     # 绘制子图1
     plt.subplot(2, 2, 1)
@@ -139,9 +154,11 @@ for num in tqdm(range(5)):
     plt.colorbar(aspect=10)
     # 绘制子图2
     plt.subplot(2, 2, 2)
-    plt.imshow(I, cmap='jet')
+    plt.imshow(I, cmap='hot')
     plt.title('I')
     plt.colorbar(aspect=10)
+    plt.show()
+
     # 绘制子图3
     # plt.subplot(2, 2, 3)
     # plt.imshow(data3, cmap='inferno')
@@ -153,10 +170,31 @@ for num in tqdm(range(5)):
     # plt.title('Subplot 4')
     # plt.colorbar(aspect=10)
     # 调整子图之间的间距
-    plt.tight_layout()
-    # 显示图形
-    plt.show()
-
+    # plt.tight_layout()
+    # # 显示图形
+    # plt.show()
+    # fig = plt.figure(figsize=(6, 4))
+    # ax = fig.add_subplot(111, projection='3d')
+    #
+    # # 生成二维数据
+    # data = ping
+    #
+    # # 创建X和Y坐标轴
+    # x = np.arange(0, data.shape[1])
+    # y = np.arange(0, data.shape[0])
+    # X, Y = np.meshgrid(x, y)
+    #
+    # # 绘制三维图
+    # ax.plot_surface(X, Y, data, cmap='jet')
+    #
+    # # 添加标签
+    # ax.set_xlabel('X Label')
+    # ax.set_ylabel('Y Label')
+    # ax.set_zlabel('Z Label')
+    #
+    # # 显示图形
+    # plt.show()
+print(max)
 
 
 
