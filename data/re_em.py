@@ -25,7 +25,7 @@ def get_ping(Cn2):
     x = np.linspace(-N / 2, N / 2, N)
     y = np.linspace(-N / 2, N / 2, N)
     X, Y = np.meshgrid(x, y)
-    l0 = 0.001
+    l0 = 0.0001
     L0 = 50
     km = 5.92 / l0
     k0 = 2 * np.pi / L0
@@ -40,7 +40,6 @@ def get_ping(Cn2):
     return ping
 
 def get_H():
-    L=1
     dx = L / N
     fx = np.linspace(-1 / (2 * dx), 1 / (2 * dx), N)
     fy = np.linspace(-1 / (2 * dx), 1 / (2 * dx), N)
@@ -49,24 +48,25 @@ def get_H():
     return H
 
 
-L = 0.5# 相位屏长度
+
 N = 256# 采样点数
+L = 0.5# 相位屏长度
 dx = L / N  # 像素间距
-bochang = 1550e-9  # 波长
+bochang = 632e-9  # 波长
 z = 1000 # 传播距离
-dz = 100# 相位屏间隔
+dz = 200# 相位屏间隔
 k = 2 * np.pi / bochang  # 波数
-w0 = 0.02  # 束腰半径
+w0 = 0.02 # 束腰半径
 k2=k**2
 x = np.linspace(-L / 2, L / 2, N)
 y = np.linspace(-L / 2, L / 2, N)
 X, Y = np.meshgrid(x, y)
 [r, theta] = cart2pol(x, y)
 beta = 40 * np.pi / 180
-Cn2 =0# 湍流强度
-#r0=(0.423*k2*Cn2*z)**(-3/5)
-#print('D/r0:',w0/r0)
-m = 2  # 拓扑核
+Cn2 =1e-13# 湍流强度
+r0=(0.423*k2*Cn2*z)**(-3/5)
+print('D/r0:',2*w0/r0)
+m =3  # 拓扑核
 E1 = (r / w0) ** abs(m) * np.exp(-r ** 2 / w0 ** 2) * np.exp(1j * beta) * np.exp(-1j * m * theta)  # 环形涡旋光
 E_c=E1
 H = get_H()  # 传递函数
@@ -100,7 +100,7 @@ plt.imshow(I_E, cmap='jet')
 plt.subplot(1, 3, 2)
 plt.imshow(I1, cmap='jet')
 plt.subplot(1, 3, 3)
-plt.imshow(np.angle(E1** np.exp(1j * ping)), cmap='gray')
+plt.imshow(np.angle(E_c), cmap='gray')
 plt.show()
 
 

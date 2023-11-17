@@ -21,23 +21,26 @@ def get_image_paths(image_dir=None):
     #train_data_path = glob.glob( 'E:/data/train/*/*.jpg' )
     return paths
 
-def get_class_nums(imgage_dir='/data/home/Deepin/mutiloam/at/*'):
+def get_class_nums(imgage_dir=r'D:/aDeskfile/experiment/vb_at/*'):
+    #r“D:\aDeskfile\experiment\vb_at\87_m=8-8.png”
     class_nums=glob.glob(imgage_dir)
-    pure_train_labels = set([p.split('/')[-1] for p in class_nums])
-    #print(pure_train_labels)
+    pure_train_labels = list(set([((p.split('=')[-1]).split('.')[0]) for p in class_nums]))
+    pure_train_labels.sort()
+    print(len(pure_train_labels))
+    print(pure_train_labels)
     return pure_train_labels
 
-def split_train_val(imgage_dir='/data/home/Deepin/mutiloam/at/*/*',split=0.8):
-    class_nums = ['L1', 'L2', 'L3', 'L4', 'L5', 'L6', 'L7', 'L8','L9','L10']
+def split_train_val(imgage_dir=r'D:\aDeskfile\experiment\vb_at\*',split=0.9):
+    class_nums = get_class_nums(imgage_dir)
     train_data_path = glob.glob(imgage_dir)
     random.shuffle(train_data_path)
-    train_data_lable = [p.split('/')[-2] for p in train_data_path]
-    #print(train_data_lable[0:4])
+    train_data_lable = [(p.split('=')[-1]).split('.')[0] for p in train_data_path]
+    #print('train_data_lable :',train_data_lable[0:9])
 
     labels_to_index = dict((index, name) for (name, index) in enumerate(class_nums))
-    print(labels_to_index)
+    #print( 'labels_to_index:',labels_to_index)
     train_labels = [labels_to_index.get(label) for label in train_data_lable]
-    #print(train_labels[0:4])
+    #print('train_data_index :',train_labels[0:4])
     labels= np.asarray(train_labels)
     #labels = torch.from_numpy(labels)
     #one_hot = torch.nn.functional.one_hot(labels_onehot, num_classes=8)
@@ -62,7 +65,6 @@ def split_train_val(imgage_dir='/data/home/Deepin/mutiloam/at/*/*',split=0.8):
     return train_at,train_lable,val_at,val_lable
 
 class MyDataset(Dataset):
-
     def __init__(self, input_dir,ground_dir, transform=None):
         self.input_dir = input_dir
         self.lable =torch.from_numpy(ground_dir)
@@ -91,24 +93,27 @@ class MyDataset(Dataset):
 
 
 if __name__ == '__main__':
-    class_nums = ['L1', 'L2', 'L3', 'L4', 'L5', 'L6', 'L7', 'L8','L9','L10']
-    train_at,train_lable,val_at,val_lable=split_train_val(imgage_dir='/data/home/Deepin/mutiloam/at/*/*',
-                                                           split=0.8)
+    path =r'D:\aDeskfile\experiment\zzz\*'
+    #get_class_nums(path)
+    split_train_val(path)
+    transform = torchvision.transforms.Compose([
+        torchvision.transforms.Resize((224, 224)),
+        torchvision.transforms.ToTensor(),
+        torchvision.transforms.RandomVerticalFlip(0.5),
+        torchvision.transforms.RandomHorizontalFlip(0.5),
+        torchvision.transforms.RandomRotation(degrees=15),
+        torchvision.transforms.Normalize(mean=[0.5], std=[0.5])])
+    train_at, train_lable, val_at, val_lable = split_train_val(imgage_dir=path, split=0.8)
     train_dataset = MyDataset(input_dir=train_at,
                               ground_dir=train_lable,
-                              transform=None)
-
-    plt.figure()
-    for i,(input,ground) in enumerate(train_dataset):
-
-        ax1 = plt.subplot(121)
-        ax2 = plt.subplot(122)
-        ax1.axis('off')
-        ax1.imshow(input,cmap='jet')
-        ax2.axis('off')
-        ax2.imshow(input,cmap='jet')
+                              transform=transform)
+    for i, (input, lable) in enumerate(train_dataset):
+        g=lable
+        print(lable)
+        plt.subplot()
+        plt.imshow(input.squeeze(),cmap='jet')
         plt.show()
-        #ax1.set_title('label {}'.format(label))
-        #plt.pause(0.001)
+
+
 
 

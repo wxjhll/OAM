@@ -100,7 +100,7 @@ def train_model(batch_size = 32,epochs = 100):
     plt.legend()
     #plt.show()
     timestamp = int(time.time())
-    plt.savefig('./result/loss_curve{}.png'.format(timestamp))
+    plt.savefig('./result1/loss_curve{}.png'.format(timestamp))
 
 
 

@@ -626,7 +626,9 @@ class SwinUnet(nn.Module):
         self.skip_1 = SkipConnection(in_size=2 * embed_dim, out_size=embed_dim)
 
         '''Linear Projection'''
-        self.linear_projection = LinearProjection(embed_dim, class_num)
+        self.linear_projection = LinearProjection(embed_dim, class_num*2)
+        # self.conv1 = nn.Conv2d(class_num*2, // 2, 1)
+        # self.conv2 = nn.Conv2d(in_ch // 2, 1, 1)
 
     def forward(self, img):
         '''x1对应y1,x2对应y2，做skipconnection'''
@@ -663,7 +665,6 @@ class SwinUnet(nn.Module):
         '''segment'''
         y, H, W = self.patch_expanding_3(y, H, W)
         y = self.linear_projection(y, H, W)
-
         return y
 
 

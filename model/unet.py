@@ -1,7 +1,7 @@
 import torch
-from unet_blocks import *
+# from unet_blocks import *
 import torch.nn as nn
-from utils import init_weights
+# from utils import init_weights
 
 
 class UpBlock(nn.Module):
@@ -10,8 +10,8 @@ class UpBlock(nn.Module):
         self.up = nn.ConvTranspose2d(input_channels, input_channels // 2, kernel_size=2, stride=2)
         self.conv = nn.Conv2d(input_channels, input_channels // 2, kernel_size=1)
         self.res = ResBlock(input_channels // 2, input_channels // 2)
-        self.up.apply(init_weights)
-        self.res.apply(init_weights)
+        # self.up.apply(init_weights)
+        # self.res.apply(init_weights)
 
     def forward(self, input, bridge):
         input = self.up(input)
@@ -31,7 +31,7 @@ class DownBlock(nn.Module):
             nn.ReLU(inplace=True),
             nn.AvgPool2d(kernel_size=2, stride=2, padding=0, ceil_mode=True)
         )
-        self.down.apply(init_weights)
+        # self.down.apply(init_weights)
 
     def forward(self, input):
         return self.down(input)
@@ -48,7 +48,7 @@ class ResBlock(nn.Module):
             nn.Conv2d(output_channels, output_channels, kernel_size=3, stride=1, padding=1),
             nn.ReLU(inplace=True)
         )
-        self.layers.apply(init_weights)
+        #self.layers.apply(init_weights)
         # self.conv = nn.Conv2d(output_channels, input_channels, kernel_size=1)
 
     def forward(self, input):

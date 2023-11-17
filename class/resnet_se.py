@@ -23,7 +23,7 @@ class ResidualBlock(nn.Module):
         self.bn1 = nn.BatchNorm2d(out_channels)
         self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, stride=1, padding=1, bias=False)
         self.bn2 = nn.BatchNorm2d(out_channels)
-        #self.se = SEBlock(out_channels)
+        self.se = SEBlock(out_channels)
         self.downsample = downsample
 
     def forward(self, x):
@@ -33,7 +33,7 @@ class ResidualBlock(nn.Module):
         x = F.relu(x)
         x = self.conv2(x)
         x = self.bn2(x)
-        #x = self.se(x)
+        x = self.se(x)
         if self.downsample is not None:
             identity = self.downsample(identity)
         x += identity
@@ -85,6 +85,6 @@ class SEResNet18(nn.Module):
 
 if __name__ == '__main__':
     # 10分类
-    res18 =SEResNet18(num_classes=10, reduction=16)
+    res18 =SEResNet18(num_classes=20, reduction=16)
     a = torch.randn(1, 1,128,128)
     print(res18(a))

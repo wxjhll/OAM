@@ -3,14 +3,13 @@ import math
 import cv2 as cv
 import  matplotlib.pyplot as plt
 from tqdm import tqdm
-np.random.seed(1998)
+#np.random.seed(1998)
 import  scipy.io as sio
 #from buchang import cnn_ping
 def lg_light(lambda_val, w0, p, z, theta, r, m):
     k = 2 * np.pi / lambda_val
     f = np.pi * w0 ** 2 / lambda_val
     w_z = w0 * np.sqrt(1 + (z / f) ** 2)
-
     # Define the Laguerre polynomial function
     def Laguerre(p, m, x):
         if p == 0:
@@ -49,25 +48,23 @@ def get_ping(Cn2):
     rb = np.random.randn(Nxy, Nxy)
     rr = ra + 1j * rb
     ping = C* Nxy ** 2 * np.fft.ifft2(rr * np.sqrt(pusai))
-    ping = np.real(ping)
+    ping = np.abs(ping)
     return ping
 
 def get_ping2(Cn2,dz):
     #Hill谱
-    N=128
-    L=N*0.00047
+    N=200
+    L=0.0003*N
+    lamda = 632e-9  # 波长
+    l0 = 0.0001  # 内外尺度
+    L0 = 50
     x = np.linspace(-N / 2, N / 2, N)
     y = np.linspace(-N / 2, N / 2, N)
     X, Y = np.meshgrid(x, y)
-    max = 0
     for _ in range(1):
         ra = np.random.randn(N, N)
         rb = np.random.randn(N, N)
         C = ra + 1j * rb
-        lamda = 1.55e-6  # 波长
-        l0 = 0.0001  # 内外尺度
-        L0 = 50
-
         k = 2 * np.pi / lamda  # 波数
         kl = 3.3 / l0
         k0 = 2 * np.pi / L0
@@ -77,7 +74,7 @@ def get_ping2(Cn2,dz):
         fai3 = (kr ** 2 + k0 ** 2) ** (-11 / 6) * np.exp(-(kr ** 2) / (kl ** 2))
         fai = fai1 * fai2 * fai3 * (2 * np.pi / L) ** 2
         ping = np.sqrt(2 * np.pi / L) * N ** 2 * np.fft.ifft2(np.fft.fftshift(C * np.sqrt(fai)))
-        ping = np.abs(ping)
+        ping = np.real(ping)
         return ping
 def get_H():
     dx = L / Nxy
@@ -86,49 +83,52 @@ def get_H():
     [Fx, Fy] = np.meshgrid(fx, fy)
     H = np.exp(1j * k * dz * np.sqrt(1 - (lambda_val  * Fx) ** 2 - (lambda_val  * Fy) ** 2))
     return H
-
-Nxy = 128
-lambda_val = 1550e-9
+#dx >sqrt(lambda*d/N)
+Nxy = 200
+lambda_val = 632e-9
 k = 2 * math.pi / lambda_val
-w = 0.02
+w = 0.001
 p = 0
 z = 0
-dz=60
+dz=40
 # Coordinate settings
-L =0.00047*Nxy
+L =Nxy*0.0003
+print(L/Nxy>=np.sqrt(lambda_val*dz/Nxy))
+
 x = np.linspace(-L/2, L/2, Nxy)
 y = np.linspace(-L/2, L/2, Nxy)
 X, Y = np.meshgrid(x, y)
 theta, r = np.arctan2(Y, X), np.sqrt(X**2 + Y**2)
 del_f = 1 / L
 dx = L / Nxy
-I0, E0 = lg_light(lambda_val, w, p, z, theta, r, 0)
+beta = 40 * np.pi / 180
+m=10
+E_g = (r / w) ** abs(m) * np.exp(-r ** 2 / w ** 2) * np.exp(1j * beta) * np.exp(-1j * m * theta)
+I0, E0 = lg_light(lambda_val, w, p, z, theta, r, 3)
+I_,E_=lg_light(lambda_val, w, p, z, theta, r, -5)
+angle_=np.angle(E_+E0)
+
+
+plt.subplot()
+plt.imshow(angle_, cmap='gray')
+plt.show()
 H = get_H()  # 传递函数
 H = np.fft.fftshift(H)
-
 ping=0
 E_c=E0
 E_cir=0
-matrix = np.zeros((256,256))
-# 设置圆的中心坐标和半径
-center_x = 128
-center_y = 128
-radius = 128
-# 计算每个点到中心的距离
-distance_matrix = np.fromfunction(lambda i, j: np.sqrt((i - center_x)**2 + (j - center_y)**2), matrix.shape)
-# 根据距离判断是否在圆内，圆内的点数值设置为0，圆外的点数值设置为1
-matrix[distance_matrix<= radius] = 1
+
 max=0
 min=0
-for num in tqdm(range(10)):
-    Cn2=(num%10+1)*1e-14
-    ping = get_ping2(Cn2,dz)  # 湍流相位屏
-    #bu=cnn_ping('../at.png')
-    #bu=cv.resize(bu,(256,256))
+for num in tqdm(range(1)):
+    Cn2=1e-14#(num%10+1)*1e-14
+    ping = get_ping2(Cn2,dz)  #湍流相位屏
     if np.max(ping)>max:
         max=np.max(ping)
     if np.min(ping)<min:
         min=np.min(ping)
+    print(max)
+    #print(np.var(ping))
     #ping = (ping % (2 * np.pi))
     # E2 = np.fft.fft2(E_c * np.exp(1j * ping))
     # E = np.fft.ifft2(E2 * H)
@@ -136,7 +136,8 @@ for num in tqdm(range(10)):
     E_cir = np.fft.fft2(E_c * np.exp(1j * ping))
     E_cir = np.fft.ifft2(E_cir * H)
 
-    I=np.abs( E_cir) ** 2
+
+    I=np.abs(E_cir) ** 2
     I=(I/np.max(I)*255).astype(np.uint8)
     #cv.imwrite('../at.png', I)
     #cv.imwrite('D:/aDeskfile/OAM/at/{}.png'.format(num), I)
@@ -149,31 +150,41 @@ for num in tqdm(range(10)):
 
     plt.figure(figsize=(6, 4))
     # 绘制子图1
-    plt.subplot(2, 2, 1)
+    plt.subplot()
     plt.imshow(ping, cmap='jet')
-    plt.title('ping')
-    plt.colorbar(aspect=10)
-    # 绘制子图2
-    plt.subplot(2, 2, 2)
+    #plt.title('ping')
+    #plt.colorbar(aspect=10)
+    plt.axis('off')
+    plt.savefig('C:/Users/dlmz/Desktop/figure/at.png',bbox_inches='tight'
+                ,pad_inches=0.0)
+    # 绘制子图2·
+    plt.subplot()
     plt.imshow(I, cmap='hot')
-    plt.title('I')
-    plt.colorbar(aspect=10)
-    plt.show()
-
-    # 绘制子图3
-    # plt.subplot(2, 2, 3)
-    # plt.imshow(data3, cmap='inferno')
+    # plt.title('I')
+    plt.colorbar()
+    plt.axis('off')
+    plt.savefig('C:/Users/dlmz/Desktop/figure/I.png', bbox_inches='tight'
+                , pad_inches=0.0)
+    #绘制子图3
+    plt.subplot()
+    plt.imshow(I, cmap='gray')
     # plt.title('Subplot 3')
     # plt.colorbar(aspect=10)
-    # # 绘制子图4
-    # plt.subplot(2, 2, 4)
-    # plt.imshow(data4, cmap='magma')
+    plt.axis('off')
+    plt.savefig('C:/Users/dlmz/Desktop/figure/atphase.png', bbox_inches='tight'
+                , pad_inches=0.0)
+    # 绘制子图4
+    plt.subplot()
+    plt.imshow(I, cmap='gray')
     # plt.title('Subplot 4')
     # plt.colorbar(aspect=10)
-    # 调整子图之间的间距
-    # plt.tight_layout()
-    # # 显示图形
-    # plt.show()
+    plt.axis('off')
+    plt.savefig('C:/Users/dlmz/Desktop/figure/xiangwei.png', bbox_inches='tight'
+                , pad_inches=0.0)
+    #调整子图之间的间距
+    #plt.tight_layout()
+    # 显示图形
+    plt.show()
     # fig = plt.figure(figsize=(6, 4))
     # ax = fig.add_subplot(111, projection='3d')
     #
@@ -195,7 +206,7 @@ for num in tqdm(range(10)):
     #
     # # 显示图形
     # plt.show()
-print(max)
+
 
 
 

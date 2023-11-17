@@ -42,12 +42,17 @@ class DropPath(nn.Module):
 
 
 def window_partition(x, window_size: int):
+    B, H, W, C = x.shape
+    x = x.view(B, H // window_size, window_size, W // window_size, window_size, C)
+    windows = x.permute(0, 1, 3, 2, 4, 5).contiguous().view(-1, window_size, window_size, C)
     return windows
 
 
 def window_reverse(windows, window_size: int, H: int, W: int):
+    B = int(windows.shape[0] / (H * W / window_size / window_size))
+    x = windows.view(B, H // window_size, W // window_size, window_size, window_size, -1)
+    x = x.permute(0, 1, 3, 2, 4, 5).contiguous().view(B, H, W, -1)
     return x
-
 
 class PatchEmbed(nn.Module):
     """
@@ -661,4 +666,16 @@ def swin_large_patch4_window12_384_in22k(num_classes: int = 21841, **kwargs):
                       num_heads=(6, 12, 24, 48),
                       num_classes=num_classes,
                       **kwargs)
-    return model
+    return model\
+
+if __name__ == '__main__':
+    model = Swin_Unet(input_channels=1,
+                      patch_size=4,
+                      window_size=7,
+                      embed_dim=96,
+                      depths=(2, 2, 18, 2),
+                      num_heads=(3, 6, 12, 24),
+                      num_classes=4,)
+    x = torch.randn((1, 1, 224, 224))
+    x = model(x)
+    print('output image size: ', x.shape)

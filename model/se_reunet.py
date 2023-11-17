@@ -3,9 +3,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import warnings
 import torchvision
-
 warnings.filterwarnings(action='ignore')
-
+from fightingcv_attention.attention.CBAM import CBAMBlock
 class SELayer(nn.Module):
     def __init__(self, channel, reduction=16):
         super(SELayer, self).__init__()
@@ -41,7 +40,6 @@ class double_conv(nn.Module):
             nn.ReLU()
         )
         self.se = SELayer(out_ch, reduction)
-
         self.channel_conv = nn.Sequential(
             nn.Conv2d(in_ch, out_ch, kernel_size=1, stride=1, bias=False),
             nn.BatchNorm2d(out_ch),
@@ -55,7 +53,7 @@ class double_conv(nn.Module):
 
         if residual.shape[1] != x.shape[1]:
             residual = self.channel_conv(residual)
-        x += residual
+        x =x+residual
         return x
 
 
@@ -114,12 +112,14 @@ class outconv(nn.Module):
         if dropout:
             print('dropout', rate)
             self.dp = nn.Dropout2d(rate)
-        self.conv = nn.Conv2d(in_ch, out_ch, 1)
+        self.conv1 = nn.Conv2d(in_ch, in_ch//2, 1)
+        self.conv2 = nn.Conv2d(in_ch//2, out_ch, 1)
 
     def forward(self, x):
         if self.dropout:
             x = self.dp(x)
-        x = self.conv(x)
+        x = self.conv1(x)
+        x = self.conv2(x)
         return x
 
 
@@ -153,15 +153,16 @@ class SeResUNet(nn.Module):
         x22 = self.up3(x33, x2)
         x11 = self.up4(x22, x1)
         x0 = self.outc(x11)
-        if self.deep_supervision and self.training:
-            x11 = F.interpolate(self.dsoutc1(x11), x0.shape[2:], mode='bilinear')
-            x22 = F.interpolate(self.dsoutc2(x22), x0.shape[2:], mode='bilinear')
-            x33 = F.interpolate(self.dsoutc3(x33), x0.shape[2:], mode='bilinear')
-            x44 = F.interpolate(self.dsoutc4(x44), x0.shape[2:], mode='bilinear')
-
-            return x0, x11, x22, x33, x44
-        else:
-            return x0
+        x0 = nn.ReLU()(x0)
+        # if self.deep_supervision and self.training:
+        #     x11 = F.interpolate(self.dsoutc1(x11), x0.shape[2:], mode='bilinear')
+        #     x22 = F.interpolate(self.dsoutc2(x22), x0.shape[2:], mode='bilinear')
+        #     x33 = F.interpolate(self.dsoutc3(x33), x0.shape[2:], mode='bilinear')
+        #     x44 = F.interpolate(self.dsoutc4(x44), x0.shape[2:], mode='bilinear')
+        #
+        #     return x0, x11, x22, x33, x44
+        # else:
+        return x0
 
 
 class Shallow_SeResUNet(nn.Module):
@@ -169,16 +170,16 @@ class Shallow_SeResUNet(nn.Module):
         super(Shallow_SeResUNet, self).__init__()
         self.deep_supervision = deep_supervision
         #big
-        self.inc = inconv(n_channels, 64)
-        self.down1 = down(64, 64)
-        self.down2 = down(64, 128)
-        self.down3 = down(128, 256)
-        self.down4 = down(256, 256)
-        self.up1 = up(256 + 256, 128)
-        self.up2 = up(128 + 128, 128)
-        self.up3 = up(128 + 64, 64)
-        self.up4 = up(64 + 64, 64)
-        self.outc = outconv(64, n_classes, dropout, rate)
+        # self.inc = inconv(n_channels, 64)
+        # self.down1 = down(64, 64)
+        # self.down2 = down(64, 128)
+        # self.down3 = down(128, 256)
+        # self.down4 = down(256, 256)
+        # self.up1 = up(256 + 256, 128)
+        # self.up2 = up(128 + 128, 128)
+        # self.up3 = up(128 + 64, 64)
+        # self.up4 = up(64 + 64, 64)
+        # self.outc = outconv(64, n_classes, dropout, rate)
         # self.dsoutc4 = outconv(128, n_classes)
         # self.dsoutc3 = outconv(128, n_classes)
         # self.dsoutc2 = outconv(64, n_classes)
@@ -189,17 +190,17 @@ class Shallow_SeResUNet(nn.Module):
         # self.up_after1=nn.ConvTranspose2d(32, 32, 2, stride=2)
         # self.up_after2=nn.ConvTranspose2d(32, 32, 2, stride=2)
         #
-        # self.inc = inconv(n_channels, 32)
-        # self.down1 = down(32, 32)
-        # self.down2 = down(32, 64)
-        # self.down3 = down(64, 128)
-        # self.down4 = down(128, 128)
-        # self.up1 = up(128 + 128, 64,bilinear=True)
-        # self.up2 = up(64 + 64, 64,bilinear=True)
-        # self.up3 = up(64 + 32, 32,bilinear=True)
-        # self.up4 = up(32 + 32, 32,bilinear=True)
-        #
-        # self.outc = outconv(32, n_classes, dropout, rate)
+        self.inc = inconv(n_channels, 32)
+        self.down1 = down(32, 32)
+        self.down2 = down(32, 64)
+        self.down3 = down(64, 128)
+        self.down4 = down(128, 128)
+        self.up1 = up(128 + 128, 64,bilinear=True)
+        self.up2 = up(64 + 64, 64,bilinear=True)
+        self.up3 = up(64 + 32, 32,bilinear=True)
+        self.up4 = up(32 + 32, 32,bilinear=True)
+
+        self.outc = outconv(32, n_classes, dropout, rate)
         # self.dsoutc4 = outconv(64, n_classes)
         # self.dsoutc3 = outconv(64, n_classes)
         # self.dsoutc2 = outconv(32, n_classes)
@@ -222,7 +223,7 @@ class Shallow_SeResUNet(nn.Module):
         # after1=self.up_after1(x11)
         # after2 = self.up_after2(after1)
         x0 = self.outc(x11)
-        #x0 = nn.Sigmoid()(x0 )
+        x0 = nn.ReLU()(x0)
         # if self.deep_supervision and self.training:
         #     x11 = F.interpolate(self.dsoutc1(x11), x0.shape[2:], mode='bilinear')
         #     x22 = F.interpolate(self.dsoutc2(x22), x0.shape[2:], mode='bilinear')
@@ -236,9 +237,6 @@ class Shallow_SeResUNet(nn.Module):
 
 if __name__ == '__main__':
     # import os
-    #
-    # os.environ['CUDA_VISIBLE_DEVICES'] = '6'
-    #
     # def weights_init(m):
     #     classname = m.__class__.__name__
     #     # print(classname)
@@ -272,32 +270,3 @@ if __name__ == '__main__':
 # print('load done')
 # input()
 #
-# model.train()
-# for i in range(100):
-# 	x = torch.randn(1, 3, 256, 256).cuda()
-# 	label = torch.rand(1, 256, 256).long().cuda()
-# 	y = model(x)
-# 	print(i)
-#
-# 	loss = loss_func(y, label)
-# 	optimizer.zero_grad()
-# 	loss.backward()
-# 	optimizer.step()
-#
-# print('train done')
-# input()
-#
-# with torch.no_grad():
-# 	model.eval()
-# 	for i in range(1000):
-# 		x = torch.randn(1, 1, 256, 256).cuda()
-# 		label = torch.rand(1, 256, 256).long().cuda()
-# 		y = model(x)
-# 		print(y.shape)
-#
-# 		# loss = loss_func(y, label)
-# 		# optimizer.zero_grad()
-# 		# loss.backward()
-# 		# optimizer.step()
-
-# input()

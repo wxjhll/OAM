@@ -4,9 +4,7 @@ from data.make_dataset import *
 from torch.utils.data import DataLoader
 import torch.nn as nn
 from tqdm import tqdm
-from model.se_reunet import Shallow_SeResUNet
-from unet import TransUnet
-from model.swin_unet import SwinUnet
+from model.get_model import load_model
 def data(img_dir,split=0.8,size_=[128,128]):
     transform = transforms.Compose([
         transforms.Resize(size_),
@@ -27,12 +25,11 @@ def data(img_dir,split=0.8,size_=[128,128]):
                                 , num_workers=4, drop_last=False)
     return train_dataloader,val_dataloader
 
-def test(net,img_dir='D:/aDeskfile/oam_m/at'
-         ,weight_path='./weight/best.pth',isplt=True,size=[128,128]):
+def test(net,img_dir='' ,weight_path='',isplt=True,splitpoint=0.95,size=[128,128]):
     net.load_state_dict(torch.load(weight_path))
     # for name, param in net.named_parameters():
     #     print(f'Layer: {name}, Size: {param.size()}, Values: {param}')
-    train_loader, test_loader = data(img_dir=img_dir, split=0.95,size_=size)
+    train_loader, test_loader = data(img_dir=img_dir, split=splitpoint,size_=size)
     device=torch.device('cuda')
     net.to('cuda')
     # 定义损失函数和准确率计算器
@@ -57,34 +54,38 @@ def test(net,img_dir='D:/aDeskfile/oam_m/at'
             mae = torch.abs(outputs.cpu().squeeze() - labels[0].cpu().squeeze())
             print('ping_var:', torch.var(labels[0].cpu().squeeze()),
                   'compention_var:', torch.var(mae))
-            if(isplt):
-                plt.subplot(221)
-                plt.imshow(labels[0].cpu().squeeze(), cmap='jet')
-                # plt.clim(0,1)
-                plt.title('true')
-                plt.subplot(222)
-                plt.imshow(outputs[0].cpu().squeeze(), cmap='jet')
-                # plt.clim(0, 1)
-                plt.title('pred')
-                plt.subplot(223)
-                plt.imshow(images[0].cpu().squeeze(), cmap='jet')
-                plt.title('at')
-                plt.subplot(224)
-                plt.imshow(mae, cmap='jet')
-                plt.clim(0, 1)
-                plt.title('mae')
-                plt.show()
+            plt.clf()
+            plt.subplot(221)
+            plt.imshow(labels[0].cpu().squeeze(), cmap='jet')
+            plt.colorbar()
+            plt.clim(0, 1)
+            plt.title('true')
+            plt.subplot(222)
+            plt.imshow(outputs[0].cpu().squeeze(), cmap='jet')
+            plt.colorbar()
+            plt.clim(0, 1)
+            plt.title('pred')
+            plt.subplot(223)
+            plt.imshow(images[0].cpu().squeeze(), cmap='hot')
+            plt.title('at')
+            plt.subplot(224)
+            plt.imshow(mae, cmap='jet')
+            plt.colorbar()
+            plt.clim(0, 1)
+            plt.title('mae')
+            plt.show(block=True)
+            #plt.pause(0.1)  # 2秒钟（根据需要调整）
+
+            # 关闭当前图形窗口
+            #plt.close()
+
+
 
 
 if __name__ == '__main__':
-
-    transunet = TransUnet(in_channels=1, img_dim=128, vit_blocks=1,
-                          vit_dim_linear_mhsa_block=512, classes=1)
-    net =Shallow_SeResUNet(n_channels=1, n_classes=1, deep_supervision = False,
-                            dropout = False, rate = 0.1)
-    swinunet= SwinUnet(embed_dim=96,patch_height=4,patch_width=4,class_num=1)
-    test(net=swinunet, img_dir='D:/aDeskfile/oam_m/at',
-         weight_path='./weight/best.pth', isplt=True,size=[128,128])
+    model = load_model("swin_denoise")
+    test(net=model, img_dir='D:/aDeskfile/train/at',
+         weight_path='./weight/swin_unet_m11d16.pth', isplt=True,splitpoint=0.8,size=[128,128])
 
 
 
