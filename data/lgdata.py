@@ -76,6 +76,7 @@ def get_ping2(Cn2,dz):
         ping = np.sqrt(2 * np.pi / L) * N ** 2 * np.fft.ifft2(np.fft.fftshift(C * np.sqrt(fai)))
         ping = np.real(ping)
         return ping
+#传递函数
 def get_H():
     dx = L / Nxy
     fx = np.linspace(-1 / (2 * dx), 1 / (2 * dx), Nxy)
@@ -85,12 +86,13 @@ def get_H():
     return H
 #dx >sqrt(lambda*d/N)
 Nxy = 200
-lambda_val = 632e-9
+lambda_val = 632e-9     #波长
 k = 2 * math.pi / lambda_val
-w = 0.001
-p = 0
+w = 0.001   #束腰半径
+p = 0   #径向指数
 z = 0
-dz=40
+
+dz=40   #传播距离
 # Coordinate settings
 L =Nxy*0.0003
 print(L/Nxy>=np.sqrt(lambda_val*dz/Nxy))
@@ -104,10 +106,9 @@ dx = L / Nxy
 beta = 40 * np.pi / 180
 m=10
 E_g = (r / w) ** abs(m) * np.exp(-r ** 2 / w ** 2) * np.exp(1j * beta) * np.exp(-1j * m * theta)
-I0, E0 = lg_light(lambda_val, w, p, z, theta, r, 3)
+I0, E0 = lg_light(lambda_val, w, p, z, theta, r, 3)#拉盖尔光束
 I_,E_=lg_light(lambda_val, w, p, z, theta, r, -5)
 angle_=np.angle(E_+E0)
-
 
 plt.subplot()
 plt.imshow(angle_, cmap='gray')
@@ -122,7 +123,7 @@ max=0
 min=0
 for num in tqdm(range(1)):
     Cn2=1e-14#(num%10+1)*1e-14
-    ping = get_ping2(Cn2,dz)  #湍流相位屏
+    ping = get_ping2(Cn2,dz)  #产生湍流相位屏
     if np.max(ping)>max:
         max=np.max(ping)
     if np.min(ping)<min:
@@ -133,9 +134,8 @@ for num in tqdm(range(1)):
     # E2 = np.fft.fft2(E_c * np.exp(1j * ping))
     # E = np.fft.ifft2(E2 * H)
 
-    E_cir = np.fft.fft2(E_c * np.exp(1j * ping))
+    E_cir = np.fft.fft2(E_c * np.exp(1j * ping))#大气湍流中传播
     E_cir = np.fft.ifft2(E_cir * H)
-
 
     I=np.abs(E_cir) ** 2
     I=(I/np.max(I)*255).astype(np.uint8)
